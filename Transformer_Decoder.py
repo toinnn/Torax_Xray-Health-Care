@@ -1,4 +1,5 @@
 import torch
+from torch import tensor
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils.prune as prune
@@ -38,8 +39,39 @@ def json2vec(js , key ,dim , gensimWorVec ):
         print("Entrou no não existe a key ")
         return torch.ones([1,dim]).float()*-47
             
+class PositionalEncoding(nn.Module):
+    def __init__(self, d_model, device = torch.device("cpu")):
+        super(PositionalEncoding, self).__init__()
+        self.device = device
+        self.d_model = d_model
+        
+        
+        
+    def set_device(self, dev):
+        self.device = dev
+    
+        # self.register_buffer('pe', pe.unsqueeze(0))
+        
+    def forward(self, x):
 
-# att = nn.MultiheadAttention(embed_dim= 100 , num_heads= 7 )
+        pos_embedding = torch.zeros(x.shape[0] , x.shape[1], self.d_model , device = self.device)
+
+        pos = torch.arange( x.shape[1] ,device = self.device).float().view(-1,1)
+        # input_sin =  #Seno
+        # input_cos =  #Cosseno
+
+        embed_pos_of_sin = torch.arange(x[: , : , 0::2].shape[-1] )*(2.0)
+        embed_pos_of_cos = torch.arange(int(x.shape[-1]/2))*(2.0)
+
+        sin_div_term = torch.exp( embed_pos_of_sin  * -(torch.log(tensor(10000)) / self.d_model)  ).view(1 , -1).to(self.device)
+        cos_div_term = torch.exp(embed_pos_of_cos  * -(torch.log(tensor(10000)) / self.d_model) ).view(1 , -1).to(self.device)
+
+        pos_embedding[: , : , 0::2 ] = torch.sin(pos * sin_div_term )
+        pos_embedding[: , : , 1::2 ] = torch.cos(pos * cos_div_term )
+
+        return x.to(self.device) + pos_embedding
+
+# att = nn.MultiheadAttention(embed_dim= model_dim , num_heads= heads )
 
 class selfAttention(nn.Module):
     def __init__(self , model_dim ,heads = 1):
@@ -63,13 +95,7 @@ class selfAttention(nn.Module):
         return weights
     def forward(self,value ,key , query, scale = True , mask = False ) :
         
-        # if type(key) != type(torch.tensor([1])) :
-        #     key   = torch.from_numpy(key)
-        #     query = torch.from_numpy(query)
-        #     value = torch.from_numpy(value)
-        # key   = key.float()
-        # query = query.float()
-        # value = value.float()
+        
 
         keys    = torch.cat([k(key  ) for k in self.keys    ],dim=0)
         queries = torch.cat([q(query) for q in self.queries ],dim=0)
@@ -88,6 +114,7 @@ class selfAttention(nn.Module):
         #             t.sin(t.cat(tuple(pos*(1e4**(-(2*i)*(1/self.head_dim))) for i in t.arange(pe[0::2,:,:].shape[0])),dim = 0).float())
         R[0::2,:,:] = torch.sin(torch.cat(tuple( pos*(1e4**(-2*i*(1/self.head_dim))) for i in torch.arange( R[0::2,:,:].shape[0] )) , dim = 0 ).float() )
         R[1::2,:,:] = torch.cos(torch.cat(tuple( pos*(1e4**(-2*i*(1/self.head_dim))) for i in torch.arange( int(R.shape[0]/2)) ) , dim = 0).float() )
+        
         
 
         UxK = torch.cat([torch.cat([i for j in torch.arange(queries.shape[1])] , dim = 0)  for i in torch.einsum("hi,hik->hk",[self.u , keys])] , dim=0 )
@@ -167,17 +194,22 @@ class decoderBlock(nn.Module):
         queries = self.norm(attention + x)
         return self.transformerBlock(values , keys , queries , scale = scale)
 class decoder(nn.Module):
-    def __init__(self,model_dim ,heads ,num_layers ,word_Embedding  , num_Classes  ,
+    def __init__(self,model_dim ,heads ,num_layers ,#word_Embedding  ,
+                 num_Classes , device = torch.device("cpu") , embed_classes = True ,
                  BOS = None ,
                  EOS = None ,
-                 forward_expansion = 4):
+                 forward_expansion = 4 ):
         super(decoder,self).__init__()
-        self.embedding = word_Embedding
-        self.EOS = Variable(torch.rand(1 , self.head_dim , dtype = float) ,
+        # self.embedding = word_Embedding
+        self.device = device
+        self.model_dim = model_dim
+        self.embed_classes = embed_classes
+        self.EOS = Variable(torch.rand(1 , self.model_dim , dtype = float) ,
                              requires_grad = True).float() if EOS == None else EOS #End-Of-Sentence Vector
-        self.BOS = Variable(torch.rand(1 , self.head_dim , dtype = float) ,
+        self.BOS = Variable(torch.rand(1 , self.model_dim , dtype = float) ,
                              requires_grad = True).float() if BOS == None else BOS #Begin-Of-Sentence Vector
-        self.classes = tuple([self.BOS , self.EOS ] + [Variable(torch.rand(1 , self.head_dim , dtype = float) , requires_grad = True).float() for i in torch.arange(num_Classes)])
+        self.classes = tuple([self.BOS , self.EOS ] + [Variable(torch.rand(1 , self.model_dim , dtype = float) , requires_grad = True).float() for i in torch.arange(num_Classes)])
+        
         
         """self.embedding["<BOS>"] = self.BOS#DEPOIS TIRAR ESSE NUMPY
         self.embedding["<EOS>"] = self.EOS#DEPOIS TIRAR ESSE NUMPY"""
@@ -188,6 +220,8 @@ class decoder(nn.Module):
         """if type(EOS) != type(torch.tensor([1])) :
             self.EOS = torch.from_numpy(self.EOS).float()
             self.BOS = -self.EOS"""
+        
+        self.pos_Encoder = PositionalEncoding(model_dim, device)
 
     def weights(self)->list:
         weights = [self.linear_Out]
@@ -205,7 +239,8 @@ class decoder(nn.Module):
 
         while  sequence.shape[0]<= max_lengh  :# Ta errado
             print("Mais um loop de Decoder e sequence.shape[0] = " , sequence.shape[0] )
-            buffer = sequence
+            buffer = self.pos_Encoder(sequence)
+            
             for l in self.layers :
                 buffer = l(buffer , Enc_values , Enc_keys)
             buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
@@ -213,16 +248,21 @@ class decoder(nn.Module):
             # out = heapq.nlargest(1, enumerate(buffer ) , key = lambda x : x[1])[0]
             soft_Out.append(buffer.view(1,-1))
             
-            sequence = torch.cat((sequence , self.classes[ out ].float().view(1,-1) ),dim = 0 )
-            # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
-            # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
-
+            if self.embed_classes :
+                sequence = torch.cat((sequence , self.classes[ out ].float().view(1,-1) ),dim = 0 )
+                # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
+                # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
+            else :
+                if out != 1 :
+                    sequence = torch.cat((sequence , self.BOS ),dim = 0 )
+                else :
+                    sequence = torch.cat((sequence , self.EOS ),dim = 0 )
         return torch.cat(soft_Out ,dim = 0)
         
 
     def forward(self ,Enc_values , Enc_keys , max_lengh = 100 ) :
         sequence = self.BOS
-        idx = [len(self.embedding.vocabulary) - 2] #Ta ERRADO
+        idx = [ 0 ] #Ta ERRADO
         while sequence[-1] != self.EOS and sequence.shape[0]< max_lengh  :# Ta errado
             buffer = sequence
             for l in self.layers :
@@ -236,8 +276,16 @@ class decoder(nn.Module):
             #buffer = F.softmax(buffer , dim = 1)
             #buffer = O Vetor com a maior probabilidade , mas qual ??
             
-            sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
-        sequence = [self.embedding.idx2token[i] for i in idx ]
+            if self.embed_classes :
+                sequence = torch.cat((sequence , self.classes[ out ].float().view(1,-1) ),dim = 0 )
+                # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
+            else :
+                if out != 1 :
+                    sequence = torch.cat((sequence , self.BOS ),dim = 0 )
+                else :
+                    sequence = torch.cat((sequence , self.EOS ),dim = 0 )
+
+        sequence = idx #[self.embedding.idx2token[i] for i in idx ]
         return sequence
 
         if sequence.shape[0] == max_lengh -1 :
