@@ -80,7 +80,7 @@ class selfAttention(nn.Module):
         self.heads    = heads 
         self.head_dim = int(model_dim / heads)
 
-        self.att = nn.MultiheadAttention(embed_dim= model_dim , num_heads= heads , device=device)
+        self.att = nn.MultiheadAttention(embed_dim= model_dim , num_heads= heads , device=device , batch_first=True)
         self.q = nn.Linear( model_dim , model_dim).to(device)
         self.k = nn.Linear( model_dim , model_dim).to(device)
         self.v = nn.Linear( model_dim , model_dim).to(device)
@@ -113,6 +113,7 @@ class selfAttention(nn.Module):
         q = self.q(query)
         v = self.v(value)
         
+        # q = torch.cat([ q.view(1,q.shape[0] , q.shape[1]) for _ in torch.arange(k.shape[0]) ] )
         attention , _ = self.att(q , k , v)
         return attention #self.output(attention)
     
@@ -207,39 +208,54 @@ class decoder(nn.Module):
         return weights
     
     def forward_fit(self ,Enc_values , Enc_keys , max_lengh  ) :
-        sequence = self.BOS
+        sequence = torch.cat( (self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0]) ) , dim = 0 )
         soft_Out = [] # nn.ModuleList([])
         # if type(sequence) != type(torch.tensor([1])) :
         #     Enc_values = torch.from_numpy(Enc_values).float()
         #     Enc_keys   = torch.from_numpy(Enc_keys).float()
             # sequence   = torch.from_numpy(self.BOS).float()
 
-        while  sequence.shape[0]<= max_lengh  :# Ta errado
+        while  sequence.shape[1]<= max_lengh  : #Comprimento da Sequencia
             print("Mais um loop de Decoder e sequence.shape[0] = " , sequence.shape[0] )
             buffer = self.pos_Encoder(sequence)
+            # buffer = torch.cat([ q.view(1,buffer.shape[0] , buffer.shape[1]) for _ in torch.arange(Enc_keys.shape[0]) ] ,
+            #               dim = 0 )
             
             for l in self.layers :
                 buffer = l(buffer , Enc_values , Enc_keys)
-            buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
-            out        = torch.argmax(buffer).item()
+            
+            # buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
+            buffer = torch.cat( list( self.linear_Out(buffer[i][-1]).view(1 ,1,-1) for i in torch.arange(buffer.shape[0]) ) ,
+                               dim = 0)
+            buffer = F.softmax(buffer , dim = 2)
+
+            # list( torch.argmax(out[i][-1] ) for i in torch.arange(out.shape[0]) )
+            out    = torch.argmax(buffer , dim = 2)
+            # out        = torch.argmax(buffer).item()
             # out = heapq.nlargest(1, enumerate(buffer ) , key = lambda x : x[1])[0]
-            soft_Out.append(buffer.view(1,-1))
+            soft_Out.append(buffer)
             
             if self.embed_classes :
-                sequence = torch.cat((sequence , self.classes[ out ].float().view(1,-1) ),dim = 0 )
+                aux = torch.cat([ self.classes[ i[-1][0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
+                sequence = torch.cat((sequence , aux) , dim = 1 )
                 # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
                 # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
             else :
-                if out != 1 :
-                    sequence = torch.cat((sequence , self.BOS ),dim = 0 )
-                else :
-                    sequence = torch.cat((sequence , self.EOS ),dim = 0 )
-        return torch.cat(soft_Out ,dim = 0)
+                aux = torch.zeros(out.shape[0] , 1 , self.model_dim , device = self.device )
+                for i in torch.arange(out.shape[0]) :
+                    if out[i][-1].item() != 1 :
+                        aux[i][-1] = self.BOS.view(-1)
+                        # sequence = torch.cat((sequence , self.BOS ),dim = 0 )
+                    else :
+                        aux[i][-1] = self.EOS.view(-1)
+                        # sequence = torch.cat((sequence , self.EOS ),dim = 0 )
+                sequence = torch.cat((sequence , aux) , dim = 1)
+        return torch.cat(soft_Out ,dim = 1)
         
 
     def forward(self ,Enc_values , Enc_keys , max_lengh = 100 ) :
         sequence = self.BOS
-        idx = [ 0 ] #Ta ERRADO
+        idx = [ 0 ] 
         while sequence[-1] != self.EOS and sequence.shape[0]< max_lengh  :# Ta errado
             buffer = self.pos_Encoder(sequence)
 
