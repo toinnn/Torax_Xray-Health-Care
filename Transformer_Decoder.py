@@ -508,7 +508,7 @@ class Trainer():
             lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_Input_Batch = None,
             test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
 
-        optimizer = torch.optim.Adam(self.parameters(), n )
+        optimizer = torch.optim.Adam(self.model.parameters(), n )
         lossValue = float("inf")
         Age = 0
         lossList = []
