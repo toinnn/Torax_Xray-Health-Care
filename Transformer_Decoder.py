@@ -183,10 +183,11 @@ class decoderBlock(nn.Module):
         queries = self.norm(attention + x)
         return self.transformerBlock(values , keys , queries , scale = scale)
 class decoder(nn.Module):
+
     def __init__(self,model_dim ,heads ,num_layers ,#word_Embedding  ,
                  num_Classes , device = torch.device("cpu") , embed_classes = True ,
-                 BOS = None ,
-                 EOS = None ,
+                 BOS = None  ,
+                 EOS = None  ,
                  forward_expansion = 4 ):
         super(decoder,self).__init__()
 
@@ -209,6 +210,7 @@ class decoder(nn.Module):
             self.BOS = -self.EOS"""
         
         self.pos_Encoder = PositionalEncoding(model_dim, device)
+
     def set_Device(self , device : torch.device):
         self.device = device
     def weights(self)->list:
@@ -433,7 +435,7 @@ class decoder(nn.Module):
             optimizer.step()
             optimizer.zero_grad()
             ctd += 1
-        if test_Input_Batch != None and test_Target_Batch != None  and best_Decoder != None  :
+        if test_Input_Batch != None and test_Target_Batch != None and best_Decoder != None  :
             diff = 0
             div = min( len(test_Input_Batch) , len(test_Target_Batch) )
             for x,y in zip( test_Input_Batch , test_Target_Batch ) :
