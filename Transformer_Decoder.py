@@ -6,6 +6,7 @@ import torch.nn.utils.prune as prune
 import matplotlib.pyplot as plt
 import random as rd
 from torch.autograd import Variable
+from torch.utils.data import DataLoader , Dataset
 # import heapq
 # from skip_Gram import skip_gram
 
@@ -501,14 +502,14 @@ class decoder(nn.Module):
 
 
 class Trainer():
-    def __init__(self , model = None) -> None:
+    def __init__(self , model :decoder ) -> None:
         self.model = model
         pass
 
       
-    def fit(self , input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
-            lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_Input_Batch = None,
-            test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
+    def fit(self , dataloader : DataLoader ,n , maxErro , maxAge = 1 ,mini_batch_size = 1  , #input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
+            lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_dataloader = None ,#Input_Batch = None,
+            out_max_Len  = 150 , transform = None) : #test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
 
         optimizer = torch.optim.Adam(self.model.parameters(), n )
         lossValue = float("inf")
@@ -517,7 +518,7 @@ class Trainer():
         bestLossValue = float("inf")
         # input_Batch = [i.view(1 , i.shape[0] , i.shape[1] ) for i in input_Batch ]    
 
-        if test_Input_Batch != None and test_Target_Batch != None :
+        if test_dataloader != None : #test_Input_Batch != None and test_Target_Batch != None :
             lossTestList = []
         best_params = cp.deepcopy(self.model)
     
@@ -526,9 +527,9 @@ class Trainer():
             ctd = 0
             print("Age atual {}".format(Age))
             
-            
-            best_params , lossValue , lossTestList = self.train_Step(input_Batch , target_Batch , optimizer  ,
-             lossFunction ,bestLossValue ,ctd ,lossValue , test_Input_Batch , test_Target_Batch , out_max_Len ,
+            #                                                           dataloader
+            best_params , lossValue , lossTestList = self.train_Step(dataloader , optimizer  ,
+             lossFunction ,bestLossValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
              best_params,lossTestList , transform )
             
             """for x,y in zip(input_Batch , target_Batch ) :
@@ -568,10 +569,10 @@ class Trainer():
                     print("Saiu do Melhor")"""
 
             Age += 1
-            lossValue = lossValue/len(target_Batch)
+            lossValue = lossValue/( len(dataloader.dataset) / dataloader.batch_size )
             lossList.append(lossValue)
         
-        if test_Input_Batch != None and test_Target_Batch != None  :
+        if test_dataloader != None : #and test_Target_Batch != None  :
             print("O melhor resultado de teste foi " , bestLossValue )
             # self.encoder = cp.deepcopy(best_Encoder)
             """self.layers     = best_params[0] 
@@ -608,23 +609,27 @@ class Trainer():
 
         return self.model
     
-    def train_Step(self ,input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
-        ctd : int , lossValue : int , test_Input_Batch= None , test_Target_Batch = None ,  out_max_Len = 150 ,
-        best_params = None ,  lossTestList = [] , transform = None ) :
+    def train_Step(self , dataloader , optimizer , lossFunction ,bestLossValue : float , #input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
+        ctd : int , lossValue : int ,test_dataloader = None ,# test_Input_Batch= None , test_Target_Batch = None ,  out_max_Len = 150 ,
+        out_max_Len = 150 , best_params = None ,  lossTestList = [] , transform = None ) :
         
-        for x,y in zip(input_Batch , target_Batch ) :
+        for x,y in dataloader :
             if transform != None :
                 x , y = transform(x) , transform(y)
             if type(y) != type(torch.tensor([1])) :
                 x = torch.from_numpy(x).float()
                 y = torch.from_numpy(y).float()
-            div = sum(( i.shape[0] for i in y))#len(y)
+            
+            x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
+            y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
+
+            div = y.shape[1]*y.shape[0]#sum(( i.shape[0] for i in y))#len(y)
                             
-            out = self.model.forward_fit(x , x , out_max_Len = y.shape[1] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
-            out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
+            out = self.model.forward_fit(x , x , out_max_Len = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
+            # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
             print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))
-            loss = lossFunction(out , y.to(self.device))/div
+            loss = lossFunction(out , y )/div
             lossValue += loss.item()
             print("Pré backward")
             loss.backward()
@@ -632,15 +637,18 @@ class Trainer():
             optimizer.step()
             optimizer.zero_grad()
             ctd += 1
-        if test_Input_Batch != None and test_Target_Batch != None  and best_Decoder != None  :
+        if test_dataloader != None and best_Decoder != None : #test_Input_Batch != None and test_Target_Batch != None    :
             diff = 0
-            div = min( len(test_Input_Batch) , len(test_Target_Batch) )
-            for x,y in zip( test_Input_Batch , test_Target_Batch ) :
+            div = len(test_dataloader.dataset )#min( len(test_Input_Batch) , len(test_Target_Batch) )
+            for x,y in test_dataloader : #zip( test_Input_Batch , test_Target_Batch ) :
                 if transform != None :
                     x , y = transform(x) , transform(y)
                 if type(y) != type(torch.tensor([1])) :
                     x = torch.from_numpy(x).float()
                     y = torch.from_numpy(y).float()
+                
+                x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
+                y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
 
                 out = self.model.forward(x.to(self.device) , x.to(self.device) , out_max_Len = out_max_Len )
                 diff += diff_Rate(out , y.to(self.device) )
