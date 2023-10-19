@@ -545,7 +545,7 @@ class Trainer():
             #                                                           dataloader
             best_params , lossValue , lossTestList = self.train_Step(dataloader , optimizer  ,
              lossFunction ,bestLossValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
-             best_params,lossTestList , transform )
+             best_params,lossTestList , transform , test_inside_age = True )
             
             """for x,y in zip(input_Batch , target_Batch ) :
                 if type(y) != type(torch.tensor([1])) :
@@ -624,9 +624,46 @@ class Trainer():
 
         return self.model
     
-    def train_Step(self , dataloader , optimizer , lossFunction ,bestLossValue : float , #input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
+    def __teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform = None) :
+        diff = 0
+        div = len(test_dataloader.dataset )#min( len(test_Input_Batch) , len(test_Target_Batch) )
+        for x,y in test_dataloader : #zip( test_Input_Batch , test_Target_Batch ) :
+            if transform != None :
+                x , y = transform(x) , transform(y)
+            if type(y) != type(torch.tensor([1])) :
+                x = torch.from_numpy(x).float()
+                y = torch.from_numpy(y).float()
+            
+            x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
+            y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
+
+            out = self.model.forward(x.to(self.device) , x.to(self.device) , out_max_Len = out_max_Len )
+            diff += diff_Rate(out , y.to(self.device).transpose(0,1) )
+            
+        lossTestList += [diff/div]
+        if  lossTestList[-1] < bestLossValue :
+            print("Novo melhor")
+            # best_Encoder  =  cp.deepcopy(self.encoder) 
+
+            """best_Decoder_layers  =  cp.deepcopy(layers)
+            best_linear_Out = cp.deepcopy(linear_Out)
+            best_classes = cp.deepcopy(classes)
+            best_BOS = best_classes[0]
+            best_EOS = best_classes[1]"""
+
+            best_params = cp.deepcopy(self.model)
+
+
+            bestLossValue =  lossTestList[-1]
+            print("Saiu do Melhor")
+
+        return best_params , bestLossValue , lossTestList  
+
+
+    def train_Step(self , dataloader , optimizer , lossFunction , bestLossValue : float , #input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
         ctd : int , lossValue : int ,test_dataloader = None ,# test_Input_Batch= None , test_Target_Batch = None ,  out_max_Len = 150 ,
-        out_max_Len = 150 , best_params = None ,  lossTestList = [] , transform = None ) :
+        out_max_Len = 150 , best_params = None ,  lossTestList = [] , transform = None ,
+        test_inside_age = False , test_interval : int = 100 ) :
         
         for x,y in dataloader :
             if transform != None :
@@ -652,38 +689,15 @@ class Trainer():
             optimizer.step()
             optimizer.zero_grad()
             ctd += 1
-        if test_dataloader != None and best_Decoder != None : #test_Input_Batch != None and test_Target_Batch != None    :
-            diff = 0
-            div = len(test_dataloader.dataset )#min( len(test_Input_Batch) , len(test_Target_Batch) )
-            for x,y in test_dataloader : #zip( test_Input_Batch , test_Target_Batch ) :
-                if transform != None :
-                    x , y = transform(x) , transform(y)
-                if type(y) != type(torch.tensor([1])) :
-                    x = torch.from_numpy(x).float()
-                    y = torch.from_numpy(y).float()
-                
-                x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
-                y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
 
-                out = self.model.forward(x.to(self.device) , x.to(self.device) , out_max_Len = out_max_Len )
-                diff += diff_Rate(out , y.to(self.device).transpose(0,1) )
-                
-            lossTestList += [diff/div]
-            if  lossTestList[-1] < bestLossValue :
-                print("Novo melhor")
-                # best_Encoder  =  cp.deepcopy(self.encoder) 
-
-                """best_Decoder_layers  =  cp.deepcopy(layers)
-                best_linear_Out = cp.deepcopy(linear_Out)
-                best_classes = cp.deepcopy(classes)
-                best_BOS = best_classes[0]
-                best_EOS = best_classes[1]"""
-
-                best_params = cp.deepcopy(self.model)
-
-
-                bestLossValue =  lossTestList[-1]
-                print("Saiu do Melhor")
+            if test_inside_age and ctd % test_interval == 0 and test_dataloader != None and best_params != None : 
+                # A CADA 100 ITERAÇÕES DE MINIBATCH É INICIADA UMA ROTINA DE TESTE
+                best_params , bestLossValue , lossTestList  = self.__teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
+            
+        if test_dataloader != None and best_params != None : #test_Input_Batch != None and test_Target_Batch != None    :
+            
+            best_params , bestLossValue , lossTestList  = self.__teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
+            
         
         if test_dataloader != None  :
             return best_params , lossValue , lossTestList
