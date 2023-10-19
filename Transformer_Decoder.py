@@ -42,7 +42,7 @@ def json2vec(js , key ,dim , gensimWorVec ):
 
 def diff_Rate(a,b):
     correct = 0
-    smallerSize = a.shape[1]
+    smallerSize = min(a.shape[1] , b.shape[1])
     for n in range(a.shape[0]):
          #min(a.shape[1] , b.shape[1] )
         for i in range(smallerSize):
@@ -51,7 +51,7 @@ def diff_Rate(a,b):
             if a[n][i]==b[n][i] :
                 correct += 1 
         # biggerSize = max(len(a) , len(b))
-    return 1 - correct/(a.shape[1] * a.shape[0]) #biggerSize 
+    return 1 - correct/(max(a.shape[1] , b.shape[1] ) * max(a.shape[0] , b.shape[0])) #biggerSize 
 
 
 class PositionalEncoding(nn.Module):
@@ -199,7 +199,7 @@ class decoder(nn.Module):
                              requires_grad = True).float() if EOS == None else EOS #End-Of-Sentence Vector
         self.BOS = Variable(torch.rand(1 , self.model_dim , dtype = float) ,
                              requires_grad = True).float() if BOS == None else BOS #Begin-Of-Sentence Vector
-        self.classes = [self.BOS , self.EOS ] + [Variable(torch.rand(1 , self.model_dim , dtype = float) , requires_grad = True).float() for i in torch.arange(num_Classes)]
+        self.classes = [ self.EOS ] + [Variable(torch.rand(1 , self.model_dim , dtype = float) , requires_grad = True).float() for i in torch.arange(num_Classes)]
         
         
         self.layers = nn.ModuleList( decoderBlock(model_dim , heads , forward_expansion = forward_expansion) for _ in torch.arange(num_layers))
@@ -220,7 +220,7 @@ class decoder(nn.Module):
             weights += i.weights()
         return weights
     
-    def forward_fit(self ,Enc_values , Enc_keys , max_lengh  ) :
+    def forward_fit(self ,Enc_values , Enc_keys , max_lengh  ) : #out shape = batch , seq-len , número de classes
         sequence = torch.cat( (self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0]) ) , dim = 0 )
         soft_Out = [] # nn.ModuleList([])
         # if type(sequence) != type(torch.tensor([1])) :
@@ -228,7 +228,7 @@ class decoder(nn.Module):
         #     Enc_keys   = torch.from_numpy(Enc_keys).float()
             # sequence   = torch.from_numpy(self.BOS).float()
 
-        while  sequence.shape[1]<= max_lengh  : #Comprimento da Sequencia
+        while  sequence.shape[1]< max_lengh  : #Comprimento da Sequencia
             print("Mais um loop de Decoder e sequence.shape[0] = " , sequence.shape[0] )
             buffer = self.pos_Encoder(sequence)
             # buffer = torch.cat([ q.view(1,buffer.shape[0] , buffer.shape[1]) for _ in torch.arange(Enc_keys.shape[0]) ] ,
@@ -265,25 +265,31 @@ class decoder(nn.Module):
                 sequence = torch.cat((sequence , aux) , dim = 1)
         return torch.cat(soft_Out ,dim = 1)
         
-
-    def forward(self ,Enc_values , Enc_keys , max_lengh = 100 ) :
-        sequence = self.BOS
+    
+    def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
+        # sequence = self.BOS
+        sequence = torch.cat( (self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0]) ) , dim = 0 )
         idx = [ 0 ] 
-        while sequence[-1] != self.EOS and sequence.shape[0]< max_lengh  :# Ta errado
+        all_seq_EOS = False
+        while ( all_seq_EOS != True and sequence.shape[1]< max_lengh )  or force_max_lengh:# Ta errado
             buffer = self.pos_Encoder(sequence)
+            
 
             for l in self.layers :
                 buffer = l(buffer , Enc_values , Enc_keys)
 
-            buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
-            out        = torch.argmax(buffer).item()
+            # buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
+            
+            # out        = torch.argmax(buffer).item()
             # out = heapq.nlargest(1, enumerate(buffer ) , key = lambda y : y[1])[0]
 
-            buffer = torch.cat( list( self.linear_Out(buffer[i][-1]).view(1 ,1,-1) for i in torch.arange(buffer.shape[0]) ) ,
-                               dim = 0)
-            buffer = F.softmax(buffer , dim = 2)
-            out    = torch.argmax(buffer , dim = 2)
 
+
+            buffer = torch.cat( list( self.linear_Out(buffer[i][-1]).view(1 ,1,-1) for i in torch.arange(buffer.shape[0]) ) ,
+                               dim = 0) # Como o original é feito assim ele terá shape : Batch , 1 , classes
+            buffer = F.softmax(buffer , dim = 2) 
+            out    = torch.argmax(buffer , dim = 2) #Reduz de 3 dimensões para duas , onde cada linha é um batch do original
+            #                                       e cada coluna é uma linha do original 
 
             idx.append(out)
             # idx.append(out[0])
@@ -291,22 +297,31 @@ class decoder(nn.Module):
             #buffer = O Vetor com a maior probabilidade , mas qual ??
             
             if self.embed_classes :
-                aux = torch.cat([ self.classes[ i[-1][0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
+                aux = torch.cat([ self.classes[ i[0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
                 sequence = torch.cat((sequence , aux) , dim = 1 )
                 # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
                 # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
             else :
                 aux = torch.zeros(out.shape[0] , 1 , self.model_dim , device = self.device )
                 for i in torch.arange(out.shape[0]) :
-                    if out[i][-1].item() != 1 :
+                    if out[i][-1].item() != 0 :
                         aux[i][-1] = self.BOS.view(-1)
                         # sequence = torch.cat((sequence , self.BOS ),dim = 0 )
                     else :
                         aux[i][-1] = self.EOS.view(-1)
                         # sequence = torch.cat((sequence , self.EOS ),dim = 0 )
                 sequence = torch.cat((sequence , aux) , dim = 1)
+            
+            all_seq_EOS = True
+            for last_out in idx[-1] :
+                if last_out[0].item() != 0 :
+                    all_seq_EOS = False
+                    break
 
-        sequence = torch.cat(idx , dim = 0 ) #[self.embedding.idx2token[i] for i in idx ]
+            if sequence.shape[1] == max_lengh :
+                force_max_lengh = False
+
+        sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
         return sequence
 
         if sequence.shape[0] == max_lengh -1 :
@@ -651,7 +666,7 @@ class Trainer():
                 y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
 
                 out = self.model.forward(x.to(self.device) , x.to(self.device) , out_max_Len = out_max_Len )
-                diff += diff_Rate(out , y.to(self.device) )
+                diff += diff_Rate(out , y.to(self.device).transpose(0,1) )
                 
             lossTestList += [diff/div]
             if  lossTestList[-1] < bestLossValue :
@@ -670,7 +685,7 @@ class Trainer():
                 bestLossValue =  lossTestList[-1]
                 print("Saiu do Melhor")
         
-        if test_Input_Batch != None and test_Target_Batch != None  :
+        if test_dataloader != None  :
             return best_params , lossValue , lossTestList
         else :
             return _ , _ , lossValue , _
