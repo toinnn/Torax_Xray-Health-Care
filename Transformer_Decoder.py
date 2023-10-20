@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import random as rd
 from torch.autograd import Variable
 from torch.utils.data import DataLoader , Dataset
+import copy as cp
 # import heapq
 # from skip_Gram import skip_gram
 
@@ -133,19 +134,21 @@ class selfAttention(nn.Module):
         return attention #self.output(attention)
     
 class transformerBlock(nn.Module):# A LAYER_NORM AINDA NÃO ME CONVENCEU
-    def __init__(self, model_dim , heads , forward_expansion = 4):
+    def __init__(self, model_dim , heads , forward_expansion = 4 , device = torch.device("cpu")):
         super(transformerBlock , self ).__init__()
         self.attention   = selfAttention(model_dim ,heads= heads)
         self.layerNorm0  = nn.LayerNorm(model_dim )
         self.layerNorm1  = nn.LayerNorm(model_dim )
         self.feedForward = nn.Sequential(nn.Linear(model_dim,model_dim * forward_expansion) , nn.ELU() , nn.Linear(model_dim * forward_expansion ,model_dim))
+        self.device = device
 
     def setDevice(self , device ):
-        self.attention.to(device)
+        self.attention.setDevice(device)
         self.layerNorm0.to(device)
         self.layerNorm1.to(device)
         self.feedForward[0].to(device)
         self.feedForward[2].to(device)
+        self.device = device
 
     def weights(self)->list:
         weights = self.attention.weights()
@@ -184,7 +187,6 @@ class decoderBlock(nn.Module):
         queries = self.norm(attention + x)
         return self.transformerBlock(values , keys , queries , scale = scale)
 class decoder(nn.Module):
-
     def __init__(self,model_dim ,heads ,num_layers ,#word_Embedding  ,
                  num_Classes , device = torch.device("cpu") , embed_classes = True ,
                  BOS = None  ,
@@ -203,6 +205,7 @@ class decoder(nn.Module):
         
         
         self.layers = nn.ModuleList( decoderBlock(model_dim , heads , forward_expansion = forward_expansion) for _ in torch.arange(num_layers))
+        # print(f"decoder layers : {self.layers} ")
         # self.linear_Out = nn.Linear(model_dim , len(self.embedding) )---OLHAR AKI DEPOIS---
         # self.linear_Out = nn.Linear(model_dim , len(self.embedding.vocab) )
         self.linear_Out = nn.Linear(model_dim , num_Classes )
@@ -212,8 +215,15 @@ class decoder(nn.Module):
         
         self.pos_Encoder = PositionalEncoding(model_dim, device)
 
-    def set_Device(self , device : torch.device):
+    def setDevice(self , device : torch.device):
         self.device = device
+        self.layers = self.layers.to(device) #nn.ModuleList( i.setDevice(device) for i in self.layers )
+        self.linear_Out = self.linear_Out.to(device)
+        self.BOS = self.BOS.to(device)
+        self.EOS = self.EOS.to(device)
+        self.classes = [  i.to(device) for i in self.classes ]
+        self.pos_Encoder.setDevice(device)
+
     def weights(self)->list:
         weights = [self.linear_Out]
         for i in self.layers :
@@ -517,11 +527,34 @@ class decoder(nn.Module):
 
 
 class Trainer():
-    def __init__(self , model :decoder ) -> None:
-        self.model = model
-        pass
+    def __init__(self , model :decoder , device = torch.device("cpu") ) -> None:
+        self.model  = model
+        self.device = device 
+        self.model.setDevice(device)
 
-      
+        
+        
+    def deepcopy(self):
+        # print(f"O EOS é leaf ? : {self.model.decoder.is_leaf}")
+        EOS = cp.deepcopy(self.model.decoder.EOS.detach())
+        BOS = cp.deepcopy(self.model.decoder.BOS.detach())
+        classes = cp.deepcopy([i.detach() for i in self.model.decoder.classes ] )
+        layers  = cp.deepcopy( self.model.decoder.layers )#nn.ModuleList( [i.detach() for i in self.model.decoder.layers  ] ) )
+
+        linear_Out  = cp.deepcopy(self.model.decoder.linear_Out)
+
+        return (EOS , BOS , classes , layers  , linear_Out) 
+
+    def loadcopy(self , params): 
+        
+        self.model.EOS = params[0].requires_grad()
+        self.model.BOS = params[1].requires_grad()
+        self.model.classes = [ i.requires_grad() for i in params[2] ]
+        self.model.layers  = params[3]
+        self.model.linear_Out  = params[4]
+
+        self.model.setDevice(self.device)
+
     def fit(self , dataloader : DataLoader ,n , maxErro , maxAge = 1 ,mini_batch_size = 1  , #input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
             lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_dataloader = None ,#Input_Batch = None,
             out_max_Len  = 150 , transform = None) : #test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
@@ -535,8 +568,10 @@ class Trainer():
 
         if test_dataloader != None : #test_Input_Batch != None and test_Target_Batch != None :
             lossTestList = []
-        best_params = cp.deepcopy(self.model)
-    
+            
+        best_params = self.deepcopy()#
+        # best_params = cp.deepcopy(self.model.detach() )
+
         while lossValue > maxErro and Age < maxAge :
             lossValue = 0
             ctd = 0
@@ -595,7 +630,8 @@ class Trainer():
             self.classes    = best_params[2]
             self.BOS = self.classes[0]
             self.EOS = self.classes[1]"""
-            self.model = best_params
+            # self.model = best_params.requires_grad()
+            self.loadcopy(best_params)
             # self.layers best_params = (self.layers , self.linear_Out , self.classes )
         
         # self.__saveLossGraph(lossGraphPath  , Age  , lossList  , bestLossValue , lossTestList)
@@ -651,7 +687,8 @@ class Trainer():
             best_BOS = best_classes[0]
             best_EOS = best_classes[1]"""
 
-            best_params = cp.deepcopy(self.model)
+            best_params = self.deepcopy() #cp.deepcopy(self.model)
+            # best_params = cp.deepcopy(self.model.detach())
 
 
             bestLossValue =  lossTestList[-1]
@@ -677,7 +714,7 @@ class Trainer():
 
             div = y.shape[1]*y.shape[0]#sum(( i.shape[0] for i in y))#len(y)
                             
-            out = self.model.forward_fit(x , x , out_max_Len = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
+            out = self.model.forward_fit(x , x , max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
             print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))
