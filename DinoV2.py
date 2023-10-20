@@ -212,13 +212,13 @@ if __name__ == '__main__':
             return
 
 
-        def forward_fit(self, image  , seq_max_lengh = 100):
+        def forward_fit(self, image  , max_lengh = 100):
             enc = self.encoder(image)
-            return self.decoder.forward_fit(enc , enc , seq_max_lengh)
+            return self.decoder.forward_fit(enc , enc , max_lengh)
         
-        def forward(self, image  , seq_max_lengh = 100):
+        def forward(self, image  , max_lengh = 100):
             enc = self.encoder(image)
-            return self.decoder(enc , enc , seq_max_lengh)
+            return self.decoder(enc , enc , max_lengh)
             
     model   = my_model(torch.device("cuda"))
     trainer = Trainer(model , torch.device("cuda") )
