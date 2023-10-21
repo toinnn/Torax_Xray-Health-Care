@@ -231,7 +231,7 @@ class decoder(nn.Module):
         return weights
     
     def forward_fit(self ,Enc_values , Enc_keys , max_lengh  ) : #out shape = batch , seq-len , número de classes
-        sequence = torch.cat( (self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0]) ) , dim = 0 )
+        sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         soft_Out = [] # nn.ModuleList([])
         # if type(sequence) != type(torch.tensor([1])) :
         #     Enc_values = torch.from_numpy(Enc_values).float()
@@ -713,8 +713,10 @@ class Trainer():
             y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
 
             div = y.shape[1]*y.shape[0]#sum(( i.shape[0] for i in y))#len(y)
-                            
-            out = self.model.forward_fit(x , x , max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
+            
+            # print(f"y.shape[0] = {y.shape[0]}")
+            out = self.model.forward_fit(x ,  max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
+            
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
             print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))

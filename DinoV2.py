@@ -5,6 +5,7 @@ from torch.utils.data import DataLoader , Dataset
 import json
 # from torchvision.io.image import decode_png, read_image
 from torchvision.io import decode_png, read_image , ImageReadMode
+import torchvision.transforms as T
 import polars as pl
 import os
 # os.environ['MP_METHOD'] = 'spawn'
@@ -202,9 +203,13 @@ if __name__ == '__main__':
         def __init__(self ,  device : torch.device = torch.device("cpu")) -> None:
             super(my_model , self  ).__init__()
             vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+            # vits14.eval()
+            # print(vits14.eval())
             self.encoder = vits14.to(device) #EU NÃO LEMBRO QUANTO DEVERIA SER O MODEL_DIM !!!!!
-            self.decoder = decoder(model_dim = 176,heads = 8 ,num_layers = 8 , num_Classes = 14 , device = device)
+            self.decoder = decoder(model_dim = 768 ,heads = 8 ,num_layers = 8 , num_Classes = 14 , device = device)
             self.device  = device
+            # self.transform_image = T.Compose([T.Resize(244), T.CenterCrop(224), T.Normalize([0.5], [0.5])] )
+            self.transform_image = T.Compose([T.Resize(224),  T.Normalize([0.5], [0.5])] )
 
         def setDevice(self , device : torch.device) :
             self.encoder = self.encoder.to( device )
@@ -213,14 +218,28 @@ if __name__ == '__main__':
 
 
         def forward_fit(self, image  , max_lengh = 100):
+            image = self.transform_image(image)[:3].unsqueeze(0) 
             enc = self.encoder(image)
+            print("Passou do Encoder")
             return self.decoder.forward_fit(enc , enc , max_lengh)
         
         def forward(self, image  , max_lengh = 100):
+            image = self.transform_image(image)[:3].unsqueeze(0) 
             enc = self.encoder(image)
             return self.decoder(enc , enc , max_lengh)
             
     model   = my_model(torch.device("cuda"))
     trainer = Trainer(model , torch.device("cuda") )
     trainer.fit(training_loader  , 0.05 , 1 , 1 , test_dataloader = test_loader )
+
+
+    """vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+    img = load_image_nvjpngl_gpu("C://Users//limaa//Dataset_work_space//Torax_Xray//images//00000099_007.png")
+    transform_image = T.Compose([T.Resize( 224)  , T.Normalize([0.5], [0.5])] )
+    img = torch.cat([img , img , img ] , dim = 0)
+    print(img.shape)
+    
+    a = transform_image(img)[:3].unsqueeze(0) 
+    print(f"img.shape : {img.shape}  e  transform_image(img)[:3].unsqueeze(0) :  {a.shape}")
+    print(vits14( a ).shape)"""
 
