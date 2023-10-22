@@ -114,8 +114,8 @@ if __name__ == '__main__':
 
 
 
-    params = {'batch_size': 8,
-        'shuffle': False ,#True,
+    params = {'batch_size': 7 ,
+        'shuffle': True,
         'num_workers': 6}
         
 

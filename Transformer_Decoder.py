@@ -1,10 +1,11 @@
 import torch
-from torch import tensor
+
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils.prune as prune
 import matplotlib.pyplot as plt
 import random as rd
+from torch import tensor
 from torch.autograd import Variable
 from torch.utils.data import DataLoader , Dataset
 import copy as cp
@@ -711,7 +712,7 @@ class Trainer():
                 x , y = transform(x) , transform(y)
             if type(y) != type(torch.tensor([1])) :
                 x = torch.from_numpy(x).float()
-                y = torch.from_numpy(y).float()
+                y = torch.from_numpy(y).int()
             
             x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
             y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
@@ -723,7 +724,7 @@ class Trainer():
             # print(f"y.shape[0] = {y.shape[0]}")
             out = self.model.forward_fit(x ,  max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
             out = out.transpose(1 , 2)
-            y   = y.transpose(  0 , 1)
+            y   = y.transpose(  0 , 1).type(torch.LongTensor).to(self.device)
             print(f"out = {out.shape}")
             # raise
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
