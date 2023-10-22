@@ -238,13 +238,14 @@ class decoder(nn.Module):
         #     Enc_keys   = torch.from_numpy(Enc_keys).float()
             # sequence   = torch.from_numpy(self.BOS).float()
 
-        while  sequence.shape[1]< max_lengh  : #Comprimento da Sequencia
-            print("Mais um loop de Decoder e sequence.shape[0] = " , sequence.shape[0] )
+        while  sequence.shape[1]<= max_lengh  : #Comprimento da Sequencia
+            print("Mais um loop de Decoder e sequence.shape = " , sequence.shape )
             buffer = self.pos_Encoder(sequence)
             # buffer = torch.cat([ q.view(1,buffer.shape[0] , buffer.shape[1]) for _ in torch.arange(Enc_keys.shape[0]) ] ,
             #               dim = 0 )
             
             for l in self.layers :
+                # print(f"\nbuffer : {buffer.shape}, \nEnc_values : {Enc_values.shape}, \nEnc_keys : {Enc_keys.shape}")
                 buffer = l(buffer , Enc_values , Enc_keys)
             
             # buffer = F.softmax(self.linear_Out(buffer[-1]) , dim = 0 )
@@ -257,9 +258,12 @@ class decoder(nn.Module):
             # out        = torch.argmax(buffer).item()
             # out = heapq.nlargest(1, enumerate(buffer ) , key = lambda x : x[1])[0]
             soft_Out.append(buffer)
+
+            # print(f"out.shape : {out.shape}")
             
             if self.embed_classes :
-                aux = torch.cat([ self.classes[ i[-1][0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
+                # aux = torch.cat([ self.classes[ i[-1][0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
+                aux = torch.cat([ self.classes[ i[-1].item() ].float().view(1, 1,-1) for i in out ] , dim = 0)
                 sequence = torch.cat((sequence , aux) , dim = 1 )
                 # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
                 # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
@@ -714,9 +718,14 @@ class Trainer():
 
             div = y.shape[1]*y.shape[0]#sum(( i.shape[0] for i in y))#len(y)
             
+            print(f"x : {x.shape}\ny : {y.shape}")
+            # raise
             # print(f"y.shape[0] = {y.shape[0]}")
             out = self.model.forward_fit(x ,  max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
-            
+            out = out.transpose(1 , 2)
+            y   = y.transpose(  0 , 1)
+            print(f"out = {out.shape}")
+            # raise
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
             print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))

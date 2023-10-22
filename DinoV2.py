@@ -218,9 +218,21 @@ if __name__ == '__main__':
 
 
         def forward_fit(self, image  , max_lengh = 100):
-            image = self.transform_image(image)[:3].unsqueeze(0) 
-            enc = self.encoder(image)
-            print("Passou do Encoder")
+            print(f"Passou do Encoder image : { image.shape}")
+            img2 = []
+            for img in image :
+                img = img.view(1, img.shape[0] , img.shape[1])
+                img = torch.cat( [img,img,img] , dim = 0 )
+                print(f"img.shape = {img.shape}")
+                print(f"trasnform : {self.transform_image( img  )[:3].unsqueeze(0).shape }")
+                img2 += [self.transform_image( img )[:3].unsqueeze(0) ]
+            # image = [ self.encoder(self.transform_image( img.view(1 , img.shape[0] , img.shape[1]))[:3].unsqueeze(0) ).view(1,1,-1)     for img in image]
+            image = [ self.encoder(img).view(1 , 1 , -1) for img in img2 ]
+            enc   = torch.cat(image , dim = 0 ) 
+            # image = self.transform_image(image)[:3].unsqueeze(0) 
+            # print(f"Passou do Encoder image : {image.shape}")
+            # enc = self.encoder(image)
+            print(f"Passou do Encoder enc : {enc.shape}")
             return self.decoder.forward_fit(enc , enc , max_lengh)
         
         def forward(self, image  , max_lengh = 100):
@@ -233,13 +245,13 @@ if __name__ == '__main__':
     trainer.fit(training_loader  , 0.05 , 1 , 1 , test_dataloader = test_loader )
 
 
-    """vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
-    img = load_image_nvjpngl_gpu("C://Users//limaa//Dataset_work_space//Torax_Xray//images//00000099_007.png")
-    transform_image = T.Compose([T.Resize( 224)  , T.Normalize([0.5], [0.5])] )
-    img = torch.cat([img , img , img ] , dim = 0)
-    print(img.shape)
+    # vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+    # img = load_image_nvjpngl_gpu("C://Users//limaa//Dataset_work_space//Torax_Xray//images//00000099_007.png")
+    # transform_image = T.Compose([T.Resize( 224)  , T.Normalize([0.5], [0.5])] )
+    # img = torch.cat([img , img , img ] , dim = 0)
+    # print(img.shape)
     
-    a = transform_image(img)[:3].unsqueeze(0) 
-    print(f"img.shape : {img.shape}  e  transform_image(img)[:3].unsqueeze(0) :  {a.shape}")
-    print(vits14( a ).shape)"""
+    # a = transform_image(img)[:3].unsqueeze(0) 
+    # print(f"img.shape : {img.shape}  e  transform_image(img)[:3].unsqueeze(0) :  {a.shape}")
+    # print(vits14( a ).shape)
 
