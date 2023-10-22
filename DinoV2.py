@@ -114,7 +114,7 @@ if __name__ == '__main__':
 
 
 
-    params = {'batch_size': 7 ,
+    params = {'batch_size': 8 ,
         'shuffle': True,
         'num_workers': 6}
         
@@ -206,7 +206,7 @@ if __name__ == '__main__':
             # vits14.eval()
             # print(vits14.eval())
             self.encoder = vits14.to(device) #EU NÃO LEMBRO QUANTO DEVERIA SER O MODEL_DIM !!!!!
-            self.decoder = decoder(model_dim = 768 ,heads = 8 ,num_layers = 8 , num_Classes = 14 , device = device)
+            self.decoder = decoder(model_dim = 768 ,heads = 8 ,num_layers = 8 , num_Classes = 16 , device = device)
             self.device  = device
             # self.transform_image = T.Compose([T.Resize(244), T.CenterCrop(224), T.Normalize([0.5], [0.5])] )
             self.transform_image = T.Compose([T.Resize(224),  T.Normalize([0.5], [0.5])] )
