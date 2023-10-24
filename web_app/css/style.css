@@ -1,0 +1,20 @@
+
+
+
+body{
+    background-color :#591C21;
+}
+
+.nav-bar{
+    color :aliceblue ;
+}
+
+.board{
+
+    background-color :aliceblue;
+    position: relative ;
+    /* left: 47.5%; */
+    /* up : 50px ; */
+    height: 500px;
+
+}
