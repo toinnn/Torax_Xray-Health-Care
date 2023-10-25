@@ -240,7 +240,7 @@ class decoder(nn.Module):
             # sequence   = torch.from_numpy(self.BOS).float()
 
         while  sequence.shape[1]<= max_lengh  : #Comprimento da Sequencia
-            print("Mais um loop de Decoder e sequence.shape = " , sequence.shape )
+            # print("Mais um loop de Decoder e sequence.shape = " , sequence.shape )
             buffer = self.pos_Encoder(sequence)
             # buffer = torch.cat([ q.view(1,buffer.shape[0] , buffer.shape[1]) for _ in torch.arange(Enc_keys.shape[0]) ] ,
             #               dim = 0 )

@@ -34,13 +34,13 @@ class dataset_NIH_Chest(Dataset):
         # self.labels = labels
         self.list_IDs = tuple(list_IDs) #Lista contendo os nomes das imagens
         self.image_dir_path = image_dir_path #string com o path da pasta que contem as imagens de input
-        # self.Data_Entry  = pl.read_csv(Data_Entry_path)
+        self.Data_Entry  = pl.read_csv(Data_Entry_path)
         self.label2class = json.load(open(label2class_path , "rb"))
         self.y_len_max = max_label_lengh + 1
         # for row in data_intro[['Image Index' ,'Finding Labels' ]].iter_rows(named=True) :
         #     print({row['Image Index'] : row['Finding Labels'].split("|") })
         #     raise
-        self.Data_Entry = {row['Image Index'] : row['Finding Labels'].split("|") for row in data_intro[['Image Index' ,'Finding Labels' ]].iter_rows(named=True)}
+        self.Data_Entry = {row['Image Index'] : row['Finding Labels'].split("|") for row in self.Data_Entry[['Image Index' ,'Finding Labels' ]].iter_rows(named=True)}
         """for row in data_intro[['Image Index' ,'Finding Labels' ]].iter_rows(named=True) :
             if max_label_lengh < len( row['Finding Labels'].split("|")  )  : """
 
@@ -223,8 +223,8 @@ if __name__ == '__main__':
             for img in image :
                 img = img.view(1, img.shape[0] , img.shape[1])
                 img = torch.cat( [img,img,img] , dim = 0 )
-                print(f"img.shape = {img.shape}")
-                print(f"trasnform : {self.transform_image( img  )[:3].unsqueeze(0).shape }")
+                # print(f"img.shape = {img.shape}")
+                # print(f"trasnform : {self.transform_image( img  )[:3].unsqueeze(0).shape }")
                 img2 += [self.transform_image( img )[:3].unsqueeze(0) ]
             # image = [ self.encoder(self.transform_image( img.view(1 , img.shape[0] , img.shape[1]))[:3].unsqueeze(0) ).view(1,1,-1)     for img in image]
             image = [ self.encoder(img).view(1 , 1 , -1) for img in img2 ]
