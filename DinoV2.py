@@ -218,7 +218,7 @@ if __name__ == '__main__':
 
 
         def forward_fit(self, image  , max_lengh = 100):
-            print(f"Passou do Encoder image : { image.shape}")
+            # print(f"Passou do Encoder image : { image.shape}")
             img2 = []
             for img in image :
                 img = img.view(1, img.shape[0] , img.shape[1])

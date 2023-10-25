@@ -457,7 +457,7 @@ class decoder(nn.Module):
             out = self.forward_fit(x , x , out_max_Len = y.shape[1] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
             out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
-            print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))
+            print(" ctd atual {}  samples processados {}\nout.shape = {} , y.shape = {}".format(ctd ,ctd*x.shape[0] ,out.shape , y.shape))
             loss = lossFunction(out , y.to(self.device))/div
             lossValue += loss.item()
             print("Pré backward")
@@ -719,13 +719,13 @@ class Trainer():
 
             div = y.shape[1]*y.shape[0]#sum(( i.shape[0] for i in y))#len(y)
             
-            print(f"x : {x.shape}\ny : {y.shape}")
+            # print(f"x : {x.shape}\ny : {y.shape}")
             # raise
             # print(f"y.shape[0] = {y.shape[0]}")
             out = self.model.forward_fit(x ,  max_lengh = y.shape[0] ) # ,target = y.to(self.device) )(TALVEZ EU RE-EMPLEMENTE A TÉCNICA QUE USA O ARGUMENTO "target")
             out = out.transpose(1 , 2)
             y   = y.transpose(  0 , 1).type(torch.LongTensor).to(self.device)
-            print(f"out = {out.shape}")
+            # print(f"out = {out.shape}")
             # raise
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
