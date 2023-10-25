@@ -232,7 +232,7 @@ if __name__ == '__main__':
             # image = self.transform_image(image)[:3].unsqueeze(0) 
             # print(f"Passou do Encoder image : {image.shape}")
             # enc = self.encoder(image)
-            print(f"Passou do Encoder enc : {enc.shape}")
+            # print(f"Passou do Encoder enc : {enc.shape}")
             return self.decoder.forward_fit(enc , enc , max_lengh)
         
         def forward(self, image  , max_lengh = 100):
