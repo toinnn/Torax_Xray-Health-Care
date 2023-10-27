@@ -678,7 +678,7 @@ class Trainer():
             x = torch.cat( [i for i in x ] , dim = 0 ).to(self.model.device)
             y = torch.cat( [i for i in y ] , dim = 1 ).to(self.model.device)
 
-            out = self.model.forward(x.to(self.device) , out_max_Len = out_max_Len )
+            out = self.model.forward(x.to(self.device) , max_Len = out_max_Len )
             diff += diff_Rate(out , y.to(self.device).transpose(0,1) )
             
         lossTestList += [diff/div]
