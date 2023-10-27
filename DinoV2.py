@@ -43,6 +43,8 @@ class dataset_NIH_Chest(Dataset):
         self.Data_Entry = {row['Image Index'] : row['Finding Labels'].split("|") for row in self.Data_Entry[['Image Index' ,'Finding Labels' ]].iter_rows(named=True)}
         """for row in data_intro[['Image Index' ,'Finding Labels' ]].iter_rows(named=True) :
             if max_label_lengh < len( row['Finding Labels'].split("|")  )  : """
+        keys = self.Data_Entry.keys()
+        self.name_2_index = {self.Data_Entry[i]: i+1  for i in range(keys) }
 
     def __len__(self):
         'Denotes the total number of samples'

@@ -729,7 +729,7 @@ class Trainer():
             # raise
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
-            print(" ctd atual {}\nout.shape = {} , y.shape = {}".format(ctd ,out.shape , y.shape))
+            print(" ctd atual {}  samples processados {}\nout.shape = {} , y.shape = {}".format(ctd , ctd*x.shape[0] ,out.shape , y.shape))
             loss = lossFunction(out , y )/div
             lossValue += loss.item()
             print("Pré backward")
@@ -741,11 +741,11 @@ class Trainer():
 
             if test_inside_age and ctd % test_interval == 0 and test_dataloader != None and best_params != None : 
                 # A CADA 100 ITERAÇÕES DE MINIBATCH É INICIADA UMA ROTINA DE TESTE
-                best_params , bestLossValue , lossTestList  = self.__teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
+                best_params , bestLossValue , lossTestList  = self.__teste(test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
             
         if test_dataloader != None and best_params != None : #test_Input_Batch != None and test_Target_Batch != None    :
             
-            best_params , bestLossValue , lossTestList  = self.__teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
+            best_params , bestLossValue , lossTestList  = self.__teste(test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
             
         
         if test_dataloader != None  :
