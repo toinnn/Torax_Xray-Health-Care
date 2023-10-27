@@ -283,6 +283,8 @@ class decoder(nn.Module):
     
     def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
         # sequence = self.BOS
+        print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
+        print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
         sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         idx = [ 0 ] 
         all_seq_EOS = False
@@ -313,7 +315,7 @@ class decoder(nn.Module):
             
             if self.embed_classes :
                 aux = torch.cat([ self.classes[ i[0] ].float().view(1, 1,-1) for i in out ] , dim = 0)
-                sequence = torch.cat((sequence , aux) , dim = 1 )
+                sequence = torch.cat( (sequence , aux) , dim = 1 )
                 # sequence = torch.cat((sequence , self.embedding.vocabulary[self.embedding.idx2token[out[0]]]),dim = 0 )
                 # sequence = torch.cat((sequence , self.classes[ out[0] ].float().view(1,-1)),dim = 0 )
             else :

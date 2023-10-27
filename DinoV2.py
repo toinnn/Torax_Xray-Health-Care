@@ -238,8 +238,20 @@ if __name__ == '__main__':
             return self.decoder.forward_fit(enc , enc , max_lengh)
         
         def forward(self, image  , max_lengh = 100):
-            image = self.transform_image(image)[:3].unsqueeze(0) 
-            enc = self.encoder(image)
+            # image = self.transform_image(image)[:3].unsqueeze(0) 
+            # enc = self.encoder(image)
+
+            img2 = []
+            for img in image :
+                img = img.view(1, img.shape[0] , img.shape[1])
+                img = torch.cat( [img,img,img] , dim = 0 )
+                # print(f"img.shape = {img.shape}")
+                # print(f"trasnform : {self.transform_image( img  )[:3].unsqueeze(0).shape }")
+                img2 += [self.transform_image( img )[:3].unsqueeze(0) ]
+            # image = [ self.encoder(self.transform_image( img.view(1 , img.shape[0] , img.shape[1]))[:3].unsqueeze(0) ).view(1,1,-1)     for img in image]
+            image = [ self.encoder(img).view(1 , 1 , -1) for img in img2 ]
+            enc   = torch.cat(image , dim = 0 ) 
+
             return self.decoder(enc , enc , max_lengh)
             
     model   = my_model(torch.device("cuda"))
