@@ -283,7 +283,7 @@ class decoder(nn.Module):
     
     def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
         # sequence = self.BOS
-        sequence = torch.cat( (self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0]) ) , dim = 0 )
+        sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         idx = [ 0 ] 
         all_seq_EOS = False
         while ( all_seq_EOS != True and sequence.shape[1]< max_lengh )  or force_max_lengh:# Ta errado
