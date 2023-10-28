@@ -483,6 +483,7 @@ class decoder(nn.Module):
                 diff += diff_Rate(out , y.to(self.device) )
                 
             lossTestList += [diff/div]
+            print(f"lossTestList : {lossTestList}")
             if  lossTestList[-1] < bestLossValue :
                 print("Novo melhor")
                 # best_Encoder  =  cp.deepcopy(self.encoder) 
