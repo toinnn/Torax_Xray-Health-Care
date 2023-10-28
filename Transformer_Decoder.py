@@ -283,8 +283,8 @@ class decoder(nn.Module):
     
     def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
         # sequence = self.BOS
-        print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
-        print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
+        # print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
+        # print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
         sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         idx = [ 0 ] 
         all_seq_EOS = False
@@ -338,6 +338,7 @@ class decoder(nn.Module):
             if sequence.shape[1] == max_lengh :
                 force_max_lengh = False
 
+        print(idx)
         sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
         return sequence
 
@@ -587,7 +588,7 @@ class Trainer():
             #                                                           dataloader
             best_params , lossValue , lossTestList = self.train_Step(dataloader , optimizer  ,
              lossFunction ,bestLossValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
-             best_params,lossTestList , transform , test_inside_age = True )
+             best_params,lossTestList , transform , test_inside_age = True , 2 )
             
             """for x,y in zip(input_Batch , target_Batch ) :
                 if type(y) != type(torch.tensor([1])) :
