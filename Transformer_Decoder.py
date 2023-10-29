@@ -738,6 +738,7 @@ class Trainer():
             print(" ctd atual {}  samples processados {}\nout.shape = {} , y.shape = {}".format(ctd , ctd*x.shape[0] ,out.shape , y.shape))
             loss = lossFunction(out , y )/div
             lossValue += loss.item()
+            print(f"loss : {loss.item()}")
             print("Pré backward")
             loss.backward()
             print("Pós backward")
@@ -747,7 +748,7 @@ class Trainer():
 
             if test_inside_age and (ctd % test_interval == 0) and test_dataloader != None and best_params != None : 
                 # A CADA 100 ITERAÇÕES DE MINIBATCH É INICIADA UMA ROTINA DE TESTE
-                print("Entrou no teste")
+                # print("Entrou no teste")
                 best_params , bestLossValue , lossTestList  = self.__teste(test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
             
         if test_dataloader != None and best_params != None : #test_Input_Batch != None and test_Target_Batch != None    :
