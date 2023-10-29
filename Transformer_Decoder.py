@@ -446,6 +446,7 @@ class decoder(nn.Module):
         plt.show()
     
     def train_Step(self ,input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
+                   
         ctd : int , lossValue : int , test_Input_Batch= None , test_Target_Batch = None ,  out_max_Len = 150 ,
         best_params = None ,  lossTestList = [] , transform = None ) :
         
@@ -686,6 +687,7 @@ class Trainer():
             diff += diff_Rate(out , y.to(self.device).transpose(0,1) )
             
         lossTestList += [diff/div]
+        print(f"lossTestList : {lossTestList}\nbestLossValue = {bestLossValue}")
         if  lossTestList[-1] < bestLossValue :
             print("Novo melhor")
             # best_Encoder  =  cp.deepcopy(self.encoder) 
@@ -743,8 +745,9 @@ class Trainer():
             optimizer.zero_grad()
             ctd += 1
 
-            if test_inside_age and ctd % test_interval == 0 and test_dataloader != None and best_params != None : 
+            if test_inside_age and (ctd % test_interval == 0) and test_dataloader != None and best_params != None : 
                 # A CADA 100 ITERAÇÕES DE MINIBATCH É INICIADA UMA ROTINA DE TESTE
+                print("Entrou no teste")
                 best_params , bestLossValue , lossTestList  = self.__teste(test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform )
             
         if test_dataloader != None and best_params != None : #test_Input_Batch != None and test_Target_Batch != None    :
