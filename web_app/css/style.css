@@ -2,17 +2,32 @@
 
 
 body{
+
     /* background-color :#591C21; */
     background-color : #010B13 ;
+    background-image : url('../images/watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg');
+    /* background-size: cover; // Ajusta o tamanho da imagem para cobrir todo o elemento 
+    background-position: center;  */
+
 }
 
 .nav-bar{
     color :aliceblue ;
+    background-image : url('images//watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg');
 }
+.send_btn{
+    display: flex;
+      justify-content: center;
+      align-items: center;
 
+      position: relative;
+
+
+}
 .board{
 
-    background-color :Rgba(217, 217, 217 , 0.1);
+    /* background-color :Rgba(217, 217, 217 , 0.8); */
+    background-color :Rgba(1, 11 , 19 , 0.86 );
     position: relative ;
     /* left: 47.5%; */
     /* up : 50px ; */
@@ -22,4 +37,10 @@ body{
     /* opacity: 0.1; */
     color: aliceblue ;
     font-weight: bold;
+
+
+    /* display: flex; */
+      justify-content: center;
+      align-items: center;
+
 }
