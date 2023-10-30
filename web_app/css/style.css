@@ -15,13 +15,21 @@ body{
     color :aliceblue ;
     background-image : url('images//watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg');
 }
-.send_btn{
-    display: flex;
+.board-screen{
+    display:grid  ;
       justify-content: center;
       align-items: center;
 
       position: relative;
 
+    height: 50vh;
+}
+.formats_text{
+    display:flex ;
+    justify-content: center;
+      align-items: center;
+
+      position: relative;
 
 }
 .board{
@@ -39,8 +47,8 @@ body{
     font-weight: bold;
 
 
-    /* display: flex; */
+    /* display: flex;
       justify-content: center;
-      align-items: center;
+      align-items: center; */
 
 }
