@@ -15,14 +15,35 @@
 
 <body>
     <!-- <div id="msg">Que isso , meu filho , Calma ! ...</div> -->
-    <div class= "nav-bar" >  Logo 
+    <div class= "nav-bar" >  
+        <!-- <img src="icons/white__stethoscope_809957 (1).png" alt="Logo" class="Logo"> -->
+        <img src="icons/white__healthcare_3403518 (1).png" alt="Logo" class="Logo"> 
     </div>
-    <div class= "board" > .
+    <div class= "board" > /
         
         <h2 class = "formats_text"> Formatos : J-PEG , PNG , JPG </h2> 
         <div class= "board-screen" >
             
-            <button type="submit" class="send_btn">Send Image </button>
+            <!-- <button type="submit" class="send_btn">Send Image  -->
+
+                <!-- <form action="/url_de_destino_do_formulario" method="post" enctype="multipart/form-data">
+                    <label for="arquivo" class="custom-btn">Enviar Imagem</label>
+                    <input type="file" id="arquivo" name="arquivo" class="file-input">
+                    <input type="submit" value="Enviar" style="display: none;">
+                  </form> -->
+
+            <!-- </button> -->
+
+
+
+            <form action="/url_de_destino_do_formulario" method="post" enctype="multipart/form-data">
+                <!-- Adicione um botão personalizado que se parece com o botão de envio -->
+                <button type="button" class="send_btn" onclick="document.getElementById('arquivo').click();">Send Image</button>
+                <input type="file" id="arquivo" name="arquivo" class="file-input">
+                <input type="submit" value="Enviar" style="display: none;">
+              </form>
+
+            
         </div>
         
 

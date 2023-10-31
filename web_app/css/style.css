@@ -1,6 +1,5 @@
 
 
-
 body{
 
     /* background-color :#591C21; */
@@ -13,7 +12,21 @@ body{
 
 .nav-bar{
     color :aliceblue ;
-    background-image : url('images//watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg');
+    background-color :#010B13 ;
+    /* background-image : url('images//watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg'); */
+    height: 7vh;
+    width: 100vw;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+  }
+.Logo{
+  /* background-color :aliceblue ; */
+  /* position: fixed; */
+  position: relative;
+  top: 10%;
+  left: 5px ;
+  height: 5vh;
 }
 .board-screen{
     display:grid  ;
@@ -21,8 +34,8 @@ body{
       align-items: center;
 
       position: relative;
-
-    height: 50vh;
+      /* top : 100px ; */
+    height: 55vh;
 }
 .formats_text{
     display:flex ;
@@ -45,10 +58,55 @@ body{
     /* opacity: 0.1; */
     color: aliceblue ;
     font-weight: bold;
+    top : 15vh;
 
 
     /* display: flex;
       justify-content: center;
       align-items: center; */
 
+}
+
+.send_btn{
+  color: aliceblue ;
+  background-color :Rgba(1, 11 , 19 , 0 );
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+}
+
+
+
+
+/* .file-input { */
+/*  display: none; /* Oculta o campo de entrada de arquivo padrão */
+/*}*/
+
+/* .custom-btn {
+  color: aliceblue;
+  background-color: rgba(1, 11, 19, 0);
+  border: none;
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+  cursor: pointer;
+} */
+
+/* Estiliza o botão quando o campo de entrada de arquivo estiver focado */
+/* .file-input:focus + .custom-btn {
+  outline: 2px solid dodgerblue;
+} */
+
+
+.send_btn {
+  color: aliceblue;
+  background-color: rgba(1, 11, 19, 0);
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+}
+
+/* Oculte o campo de entrada de arquivo */
+.file-input {
+  display: none;
 }
