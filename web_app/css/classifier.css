@@ -1,0 +1,120 @@
+
+
+body{
+
+    /* background-color :#591C21; */
+    background-color : #010B13 ;
+    /* background-image : url('../images/watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg'); */
+    background-image :url(" C:/Users/limaa/Dataset_work_space/Torax_Xray/images/00000003_006.png") 
+    /* background-size: cover; // Ajusta o tamanho da imagem para cobrir todo o elemento 
+    background-position: center;  */
+
+}
+
+.nav-bar{
+    color :aliceblue ;
+    background-color :#010B13 ;
+    /* background-image : url('images//watermark__removed__stock-photo-doctor-diagnosing-patient-s-health-on-asthma-lung-disease-covid-coronavirus-or-bone-cancer-1682639740.jpg'); */
+    height: 7vh;
+    width: 100vw;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+  }
+.Logo{
+  /* background-color :aliceblue ; */
+  /* position: fixed; */
+  position: relative;
+  top: 10%;
+  left: 5px ;
+  height: 5vh;
+}
+.board-screen{
+    display:grid  ;
+      justify-content: center;
+      align-items: center;
+
+      position: relative;
+      /* top : 100px ; */
+    height: 55vh;
+}
+.formats_text{
+    display:flex ;
+    justify-content: center;
+      align-items: center;
+
+      position: relative;
+
+}
+.board{
+
+    /* background-color :Rgba(217, 217, 217 , 0.8); */
+    /* background-color :Rgba(1, 11 , 19 , 1.0 ); */
+    background-color :rgb(7, 34, 54);
+    position: absolute ;
+    /* left: 47.5%; */
+    /* up : 50px ; */
+    height: 93vh;
+    width: 30vw;
+    /* border-radius: 24px; */
+    /* opacity: 0.1; */
+    color: aliceblue ;
+    font-weight: bold;
+    top : 7vh;
+    right : 0%;
+
+    /* display: flex;
+      justify-content: center;
+      align-items: center; */
+
+}
+
+
+.detected_classes{
+
+    height: 65vh;  
+}
+
+.send_btn{
+  color: aliceblue ;
+  background-color :Rgba(1, 11 , 19 , 0 );
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+}
+
+
+
+
+/* .file-input { */
+/*  display: none; /* Oculta o campo de entrada de arquivo padrão */
+/*}*/
+
+/* .custom-btn {
+  color: aliceblue;
+  background-color: rgba(1, 11, 19, 0);
+  border: none;
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+  cursor: pointer;
+} */
+
+/* Estiliza o botão quando o campo de entrada de arquivo estiver focado */
+/* .file-input:focus + .custom-btn {
+  outline: 2px solid dodgerblue;
+} */
+
+
+.send_btn {
+  color: aliceblue;
+  background-color: rgba(1, 11, 19, 0);
+  border-radius: 12px;
+  height: 8vh;
+  width: 13vw;
+}
+
+/* Oculte o campo de entrada de arquivo */
+.file-input {
+  display: none;
+}
