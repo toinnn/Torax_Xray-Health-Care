@@ -557,6 +557,7 @@ class Trainer():
 
     def loadcopy(self , params): 
         
+        print(params)
         self.model.EOS = params[0].requires_grad()
         self.model.BOS = params[1].requires_grad()
         self.model.classes = [ i.requires_grad() for i in params[2] ]
@@ -573,7 +574,7 @@ class Trainer():
         lossValue = float("inf")
         Age = 0
         lossList = []
-        bestLossValue = float("inf")
+        bestLossTestValue = float("inf")
         # input_Batch = [i.view(1 , i.shape[0] , i.shape[1] ) for i in input_Batch ]    
 
         if test_dataloader != None : #test_Input_Batch != None and test_Target_Batch != None :
@@ -588,8 +589,8 @@ class Trainer():
             print("Age atual {}".format(Age))
             
             #                                                           dataloader
-            best_params , lossValue , lossTestList = self.train_Step(dataloader , optimizer  ,
-             lossFunction ,bestLossValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
+            best_params , lossValue , lossTestList , bestLossTestValue = self.train_Step(dataloader , optimizer  ,
+             lossFunction ,bestLossTestValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
              best_params,lossTestList , transform , test_inside_age = True , test_interval = 2 )
             
             """for x,y in zip(input_Batch , target_Batch ) :
@@ -633,7 +634,7 @@ class Trainer():
             lossList.append(lossValue)
         
         if test_dataloader != None : #and test_Target_Batch != None  :
-            print("O melhor resultado de teste foi " , bestLossValue )
+            print("O melhor resultado de teste foi " , bestLossTestValue )
             # self.encoder = cp.deepcopy(best_Encoder)
             """self.layers     = best_params[0] 
             self.linear_Out = best_params[1] 
@@ -757,7 +758,7 @@ class Trainer():
             
         
         if test_dataloader != None  :
-            return best_params , lossValue , lossTestList
+            return best_params , lossValue , lossTestList , bestLossValue
         else :
             return _ , _ , lossValue , _
 
