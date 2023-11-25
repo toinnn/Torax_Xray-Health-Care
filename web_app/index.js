@@ -12,7 +12,7 @@ function handleFileSelect(event) {
     if (file) {
         // Cria um objeto FormData para enviar o arquivo
         const formData = new FormData();
-        formData.append('arquivo', file);
+        formData.append('file', file);
 
         // Opções da solicitação
         const options = {
@@ -36,3 +36,26 @@ function handleFileSelect(event) {
         // event.preventDefault();
     }
 }
+
+
+// function handleFileSelect(event) {
+//     const fileInput = event.target;
+//     const file = fileInput.files[0];
+
+//     if (file) {
+//         const formData = new FormData();
+//         // formData.append('arquivo', file);
+//         formData.append('file', file);
+
+        
+
+//         // Realiza a solicitação POST usando Axios
+//         axios.post('/send_image', formData)
+//             .then(response => {
+//                 console.log('Resposta do servidor:', response.data);
+//             })
+//             .catch(error => {
+//                 console.error('Erro na solicitação:', error);
+//             });
+//     }
+// }

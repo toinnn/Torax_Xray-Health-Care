@@ -9,7 +9,8 @@
     <!-- <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
     <script defer src="https://pyscript.net/latest/pyscript.js"></script> -->
 
-    
+    <!--Inclusão do axios -->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 </head>
 
 
@@ -34,7 +35,7 @@
             <form id="uploadForm" action="/send_image" method="post" enctype="multipart/form-data">
                 <!-- Adicione um botão personalizado que se parece com o botão de envio -->
                 <button type="button" class="send_btn" onclick="document.getElementById('arquivo').click();">Send Image</button>
-                <input type="file" id="arquivo" name="arquivoo" class="file-input" onchange="handleFileSelect(event)"> 
+                <input type="file" id="arquivo" name="arquivo" class="file-input" onchange="handleFileSelect(event)"> 
             </form>
             <script src = "index.js" ></script>
             <!-- <script>
