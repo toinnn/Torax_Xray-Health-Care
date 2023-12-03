@@ -1,4 +1,5 @@
 papers
 __pycache__
 teste.py
-images/gnored/
+web_app/images/gnored/
+teste.pickle
