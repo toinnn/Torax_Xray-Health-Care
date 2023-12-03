@@ -1,5 +1,5 @@
 import torch
-
+import pickle
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.nn.utils.prune as prune
@@ -642,7 +642,11 @@ class Trainer():
             self.BOS = self.classes[0]
             self.EOS = self.classes[1]"""
             # self.model = best_params.requires_grad()
-            self.loadcopy(best_params)
+            
+            #Em testes pode ser que mude :
+            # self.loadcopy(best_params)
+            self.model = self.load_from_Path("best_model_in_test.pickle")
+            
             # self.layers best_params = (self.layers , self.linear_Out , self.classes )
         
         # self.__saveLossGraph(lossGraphPath  , Age  , lossList  , bestLossValue , lossTestList)
@@ -667,13 +671,26 @@ class Trainer():
         else :
             plt.savefig("BiLSTM_ATTENTON_LossInTrain_Plot.png")
             plt.savefig("BiLSTM_ATTENTON_LossInTrain_Plot.pdf")"""
-        plt.show()
+        # plt.show()
 
         return self.model , min(lossTestList)
     
+    def __save_In_Path(  self , model , path ) :
+        with open( path , 'wb') as file:
+            pickle.dump( model, file)
+        print(f"Objeto salvo em { path }")
+
+
+    def load_from_Path(self , path) :
+        with open(path, 'rb') as file:
+            obj = pickle.load(file)
+        print(f"Objeto carregado de {path}")
+        return obj
+    
+
     def __teste(self , test_dataloader ,best_params , out_max_Len , lossTestList , bestLossValue , transform = None) :
         diff = 0
-        div = len(test_dataloader.dataset )#min( len(test_Input_Batch) , len(test_Target_Batch) )
+        div  = len(test_dataloader.dataset )#min( len(test_Input_Batch) , len(test_Target_Batch) )
         for x,y in test_dataloader : #zip( test_Input_Batch , test_Target_Batch ) :
             if transform != None :
                 x , y = transform(x) , transform(y)
@@ -702,8 +719,9 @@ class Trainer():
             best_params = self.deepcopy() #cp.deepcopy(self.model)
             # best_params = cp.deepcopy(self.model.detach())
 
-
+            path = "best_model_in_test.pickle"
             bestLossValue =  lossTestList[-1]
+            self.__save_In_Path( self.model , path )
             print("Saiu do Melhor")
 
         return best_params , bestLossValue , lossTestList  
