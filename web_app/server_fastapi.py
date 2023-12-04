@@ -6,7 +6,9 @@ import io
 from PIL import Image
 import numpy as np
 import matplotlib.pyplot as plt
+from servicer.Image_processing_service import image_processing_service
 
+image_model = image_processing_service()
 app = FastAPI()
 
 

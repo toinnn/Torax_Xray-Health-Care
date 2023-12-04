@@ -202,7 +202,6 @@ if __name__ == '__main__':
     print(load_image_nvjpngl_gpu("C://Users//limaa//Dataset_work_space//Torax_Xray//images//" + name_id ).cuda().shape )
 
 
-    ####COLOCAR O IMPORT A MY_MODEL
     model   = my_model(torch.device("cuda"))
     trainer = Trainer(model , torch.device("cuda") )
     trainer.fit(training_loader  , 0.05 , 1 , 1 , test_dataloader = test_loader )
