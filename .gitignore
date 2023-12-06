@@ -3,3 +3,4 @@ __pycache__
 teste.py
 web_app/images/gnored/
 teste.pickle
+web_app/server.py

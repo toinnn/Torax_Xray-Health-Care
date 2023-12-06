@@ -1,14 +1,36 @@
 from fastapi import FastAPI, Request, HTTPException , File , UploadFile
 from fastapi.responses import FileResponse
-from fastapi.templating import Jinja2Templates
+# from fastapi.templating import Jinja2Templates
+import uvicorn
 from pathlib import Path
 import io
+import os
+import sys
 from PIL import Image
 import numpy as np
+import torch
 import matplotlib.pyplot as plt
 from servicer.Image_processing_service import image_processing_service
 
+
+vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+
+# Obtém o caminho absoluto do diretório avô do diretório deste arquivo :
+diretorio_pai = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+# Adiciona o diretório do projeto ao sys.path :
+sys.path.append( diretorio_pai )
+from my_models import my_model 
+
+
 image_model = image_processing_service()
+
+path_model_0 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_0_loss_0.03098666666666666.model"
+path_model_1 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_1_loss_0.03098666666666666.model"
+
+
+if __name__ == "__main__":
+    image_model.load_model( path_model_1 )
 app = FastAPI()
 
 
@@ -22,6 +44,8 @@ async def hello_():
 
 @app.post("/send_image")
 async def send_image(file: UploadFile = File(...)):
+    
+    
     try:
         # Aqui você pode adicionar lógica adicional para processar o arquivo se necessário
         print("Entrou aqui")
@@ -30,6 +54,9 @@ async def send_image(file: UploadFile = File(...)):
 
         # Converte os bytes para um objeto de imagem usando o Pillow
         image = Image.open(io.BytesIO(contents))
+        print(image_model , torch.tensor(np.array(image)) )
+        print(f"\n\n\nResposta do modelo = {image_model.model }\n\n")
+        # print(f"\n\n\nResposta do modelo = {image_model.model(torch.tensor(np.array(image))) }\n\n")
         # print(io.BytesIO(contents))
         print(np.array(image).shape)
 
@@ -57,6 +84,7 @@ async def read_file(file_path: str, request: Request):
     # Verificando se o arquivo existe
     if not file_path.is_file():
         raise HTTPException(status_code=404, detail="Arquivo não encontrado")
+    
 
     return FileResponse(file_path, media_type="text/html" if file_path.suffix == ".html" else None)
 
@@ -64,3 +92,7 @@ async def read_file(file_path: str, request: Request):
 # templates = Jinja2Templates(directory="static")
 
 
+if __name__ == "__main__":
+    
+
+    uvicorn.run("server_fastapi:app", workers=1, host='0.0.0.0', port=10000, reload=True)

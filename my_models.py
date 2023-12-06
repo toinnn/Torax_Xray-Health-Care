@@ -57,3 +57,4 @@ class my_model(nn.Module):
 
         return self.decoder(enc , enc , max_lengh)
             
+# my = my_model()
