@@ -338,7 +338,7 @@ class decoder(nn.Module):
             if sequence.shape[1] == max_lengh :
                 force_max_lengh = False
 
-        print(f"idx = {idx}")
+        # print(f"idx = {idx}")
         idx[0] = torch.zeros(idx[-1].shape[0] , idx[-1].shape[1] , device = self.device )
         sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
         # print(sequence)
