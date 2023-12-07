@@ -10,27 +10,27 @@ from PIL import Image
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from servicer.Image_processing_service import image_processing_service
+from servicer.Image_processing_service import show_resuts #image_processing_service
 
 
-vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
+# vits14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitb14')
 
 # Obtém o caminho absoluto do diretório avô do diretório deste arquivo :
 diretorio_pai = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Adiciona o diretório do projeto ao sys.path :
 sys.path.append( diretorio_pai )
-from my_models import my_model 
+from servicer.my_models import my_model 
 
 
-image_model = image_processing_service()
+# image_model = image_processing_service()
 
-path_model_0 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_0_loss_0.03098666666666666.model"
-path_model_1 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_1_loss_0.03098666666666666.model"
+# path_model_0 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_0_loss_0.03098666666666666.model"
+# path_model_1 = "D://Bibliotecas//Documents//Dev_Projects//PythonProjects//VsCodePython//UFC//BioData//Torax_Xray-Health-Care//I.A._Models//xRay_model_1_loss_0.03098666666666666.model"
 
 
-if __name__ == "__main__":
-    image_model.load_model( path_model_1 )
+# # if __name__ == "__main__":
+#     image_model.load_model( path_model_1 )
 app = FastAPI()
 
 
@@ -45,34 +45,45 @@ async def hello_():
 @app.post("/send_image")
 async def send_image(file: UploadFile = File(...)):
     
+    # image_model = image_processing_service()
+
+    # path_model_0 = "I.A._Models//xRay_model_0_loss_0.03098666666666666.model"
+    # path_model_1 = "I.A._Models//xRay_model_1_loss_0.03098666666666666.model"
+
+
+    # if __name__ == "__main__":
+    # image_model.load_model( path_model_1 )
     
     try:
         # Aqui você pode adicionar lógica adicional para processar o arquivo se necessário
-        print("Entrou aqui")
+        print("Entrou aqui no try")
         # Lê os bytes da imagem
         contents = await file.read()
+        show_resuts(contents)
+        # out = show_resuts(contents)
+        
+        # # Converte os bytes para um objeto de imagem usando o Pillow
+        # image = Image.open(io.BytesIO(contents))
+        # print(image_model , torch.tensor(np.array(image)) )
+        # print(f"\n\n\nResposta do modelo = {image_model.model }\n\n")
+        # # print(f"\n\n\nResposta do modelo = {image_model.model(torch.tensor(np.array(image))) }\n\n")
+        # # print(io.BytesIO(contents))
+        # print(np.array(image).shape)
 
-        # Converte os bytes para um objeto de imagem usando o Pillow
-        image = Image.open(io.BytesIO(contents))
-        print(image_model , torch.tensor(np.array(image)) )
-        print(f"\n\n\nResposta do modelo = {image_model.model }\n\n")
-        # print(f"\n\n\nResposta do modelo = {image_model.model(torch.tensor(np.array(image))) }\n\n")
-        # print(io.BytesIO(contents))
-        print(np.array(image).shape)
+        # # Converte a imagem para um array NumPy
+        # image_array = np.array(image)
 
-        # Converte a imagem para um array NumPy
-        image_array = np.array(image)
+        # # Crie uma representação visual da imagem usando matplotlib
+        # plt.imshow(image_array)
+        # plt.axis('off')  # Desliga os eixos
+        # plt.tight_layout(pad=0)
 
-        # Crie uma representação visual da imagem usando matplotlib
-        plt.imshow(image_array)
-        plt.axis('off')  # Desliga os eixos
-        plt.tight_layout(pad=0)
+        # plt.show()
+        # plt.close()
 
-        plt.show()
-        plt.close()
-
-    
-        return {"message": "Arquivo recebido com sucesso"}
+        # print("saíiii")
+        # resposta_json = {"mensagem": "Arquivo recebido com sucesso!", "status": "OK"}
+        # return resposta_json
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -95,4 +106,4 @@ async def read_file(file_path: str, request: Request):
 if __name__ == "__main__":
     
 
-    uvicorn.run("server_fastapi:app", workers=1, host='0.0.0.0', port=10000, reload=True)
+    uvicorn.run("server_fastapi:app", workers=1, host='0.0.0.0', port=8000, reload=True)

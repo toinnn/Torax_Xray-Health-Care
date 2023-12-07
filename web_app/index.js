@@ -17,6 +17,7 @@ function handleFileSelect(event) {
         // Opções da solicitação
         const options = {
             method: 'POST',
+            // method: 'GET',
             body: formData
         };
 
