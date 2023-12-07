@@ -571,8 +571,12 @@ class Trainer():
     def fit(self , dataloader : DataLoader ,n , maxErro , maxAge = 1 ,mini_batch_size = 1  , #input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
             lossFunction = nn.CrossEntropyLoss ,lossGraphPath = None , test_dataloader = None ,#Input_Batch = None,
             out_max_Len  = 150  , transform = None ,
-            model_class  = None , model_args :dict = {}  ) : #test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
+            model_class  = None , model_args :dict = {} , class_weight = None ) : #test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
 
+        if class_weight != None :
+            lossFunction = lossFunction(weight = class_weight )
+        else :
+            lossFunction = lossFunction()
         optimizer = torch.optim.Adam(self.model.parameters(), n )
         lossValue = float("inf")
         Age = 0
@@ -594,7 +598,7 @@ class Trainer():
             #                                                           dataloader
             best_params , lossValue , lossTestList , bestLossTestValue = self.train_Step(dataloader , optimizer  ,
              lossFunction ,bestLossTestValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
-             best_params,lossTestList , transform , test_inside_age = True , test_interval = 2 )
+             best_params,lossTestList , transform , test_inside_age = True , test_interval = 2 , class_weight = class_weight)
             
             """for x,y in zip(input_Batch , target_Batch ) :
                 if type(y) != type(torch.tensor([1])) :
@@ -739,10 +743,10 @@ class Trainer():
     def train_Step(self , dataloader , optimizer , lossFunction , bestLossValue : float , #input_Batch :list , target_Batch : list , optimizer , lossFunction ,bestLossValue : float ,
         ctd : int , lossValue : int ,test_dataloader = None ,# test_Input_Batch= None , test_Target_Batch = None ,  out_max_Len = 150 ,
         out_max_Len = 150 , best_params = None ,  lossTestList = [] , transform = None ,
-        test_inside_age = False , test_interval : int = 100 ) :
+        test_inside_age = False , test_interval : int = 100  ) :
         
-        for x,y,w in dataloader :
-            lossFunction_instance = lossFunction(weight=w)
+        for x,y in dataloader :
+            
             if transform != None :
                 x , y = transform(x) , transform(y)
             if type(y) != type(torch.tensor([1])) :
@@ -765,7 +769,7 @@ class Trainer():
             # out = torch.cat((i[-1].view(1,-1) for i in out ) , dim = 0 )
 
             print(" ctd atual {}  samples processados {}\nout.shape = {} , y.shape = {}".format(ctd , ctd*x.shape[0] ,out.shape , y.shape))
-            loss = lossFunction_instance(out , y )/div
+            loss = lossFunction(out , y )/div
             lossValue += loss.item()
             print(f"loss : {loss.item()}")
             print("Pré backward")
