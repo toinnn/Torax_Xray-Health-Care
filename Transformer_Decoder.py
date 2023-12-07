@@ -598,7 +598,7 @@ class Trainer():
             #                                                           dataloader
             best_params , lossValue , lossTestList , bestLossTestValue = self.train_Step(dataloader , optimizer  ,
              lossFunction ,bestLossTestValue ,ctd ,lossValue , test_dataloader , out_max_Len ,
-             best_params,lossTestList , transform , test_inside_age = True , test_interval = 2 , class_weight = class_weight)
+             best_params,lossTestList , transform , test_inside_age = True , test_interval = 2 )
             
             """for x,y in zip(input_Batch , target_Batch ) :
                 if type(y) != type(torch.tensor([1])) :
