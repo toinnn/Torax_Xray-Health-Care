@@ -20,7 +20,7 @@ diretorio_pai = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 
 # Adiciona o diretório do projeto ao sys.path :
 sys.path.append( diretorio_pai )
-from servicer.my_models import my_model 
+from servicer.my_models import * #my_model 
 
 
 # image_model = image_processing_service()

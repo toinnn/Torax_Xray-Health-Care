@@ -25,7 +25,7 @@ import torch
 # sys.path.append( diretorio_avo )
 # sys.path.append( diretorio_pai )
 
-from servicer.my_models import my_model
+from servicer.my_models import my_model , my_model_medium , my_model_small
 # from servicer.Transformer_Decoder import decoder
 
 
@@ -36,7 +36,14 @@ class image_processing_service() :
     path_1 = "I.A._Models//state__xRay_model_1_loss_0.03098666666666666.model"
     path_2 = "I.A._Models//state__xRay_model_2_loss_0.029229629629629626.model"
     path_3 = "I.A._Models//state__xRay_model_3_loss_0.029611111111111116.model"
-    def __init__(self , model_class = my_model , model_args : dict = {} ,model_path = path_3 , dict = None) -> None :
+    path_4 = "I.A._Models//state__xRay_model_4_loss_0.06855873015873015.model"
+    path_5 = "I.A._Models//state__xRay_model_5_loss_0.03429714285714285.model"
+    path_6 = "I.A._Models//state__xRay_model_6_loss_0.03428571428571429.model"
+    path_7 = "I.A._Models//state__xRay_model_7_loss_0.03432952380952381.model"
+    path_8 = "I.A._Models//state__xRay_model_8_loss_0.034127619047619046.model"
+    path_9 = "I.A._Models//state__xRay_model_9_loss_0.034420952380952385.model"
+
+    def __init__(self , model_class = my_model_small , model_args : dict = {} ,model_path = path_9 , dict = None) -> None :
         self.model = None
         # self.load_model(model_path)
         self.load_model(model_path , model_class , model_args )
@@ -89,10 +96,10 @@ def show_resuts(contents):
     print(image_model , image_tensor.shape )
     # print(f"\n\n\nResposta do modelo = {image_model.model }\n\n")
 
-    out = image_model.model.forward_fit(image_tensor , max_lengh = 9 )
+    # out = image_model.model.forward_fit(image_tensor , max_lengh = 9 )
     # out = pega_argmax(out)
 
-    # out = image_model.model(image_tensor  )
+    out = image_model.model(  image_tensor  )
     print(f"\n\n\nResposta do modelo = { out }\n\n")
     # print(io.BytesIO(contents))
     # print(np.array(image).shape)

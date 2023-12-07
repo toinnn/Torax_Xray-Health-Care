@@ -342,7 +342,7 @@ class decoder(nn.Module):
         idx[0] = torch.zeros(idx[-1].shape[0] , idx[-1].shape[1] , device = self.device )
         sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
         # print(sequence)
-        return sequence #[: , -1]
+        return sequence[: , -1]
 
         if sequence.shape[0] == max_lengh -1 :
             return torch.cat((sequence,self.EOS),dim = 0)
