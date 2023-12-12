@@ -192,11 +192,29 @@ class decoder(nn.Module):
                  num_Classes , device = torch.device("cpu") , embed_classes = True ,
                  BOS = None  ,
                  EOS = None  ,
-                 forward_expansion = 4 ):
+                 forward_expansion = 4 , classification = True):
         super(decoder,self).__init__()
 
         self.device = device
         self.model_dim = model_dim
+        self.type_net = None
+
+        self.linear_Out = None
+        if classification :
+            if num_Classes == 1 :
+                self.type_net = "Bin_classification"
+            else :
+                self.type_net = "classification"
+            self.linear_Out = nn.Linear(model_dim , num_Classes )
+        else :
+            self.type_net = "regression"
+            # self.linear_Out = nn.Linear(model_dim , num_Classes )
+            self.linear_Out = nn.Linear(model_dim , 1 )
+
+        
+
+
+        ## self.type_net == "classification" :
         self.embed_classes = embed_classes
         self.EOS = Variable(torch.rand(1 , self.model_dim , dtype = float) ,
                              requires_grad = True).float() if EOS == None else EOS #End-Of-Sentence Vector
@@ -207,12 +225,7 @@ class decoder(nn.Module):
         
         self.layers = nn.ModuleList( decoderBlock(model_dim , heads , forward_expansion = forward_expansion) for _ in torch.arange(num_layers))
         # print(f"decoder layers : {self.layers} ")
-        # self.linear_Out = nn.Linear(model_dim , len(self.embedding) )---OLHAR AKI DEPOIS---
-        # self.linear_Out = nn.Linear(model_dim , len(self.embedding.vocab) )
-        self.linear_Out = nn.Linear(model_dim , num_Classes )
-        """if type(EOS) != type(torch.tensor([1])) :
-            self.EOS = torch.from_numpy(self.EOS).float()
-            self.BOS = -self.EOS"""
+        
         
         self.pos_Encoder = PositionalEncoding(model_dim, device)
 
@@ -231,7 +244,9 @@ class decoder(nn.Module):
             weights += i.weights()
         return weights
     
-    def forward_fit(self ,Enc_values , Enc_keys , max_lengh  ) : #out shape = batch , seq-len , número de classes
+
+    def __forward_fit_classification(self , Enc_values , Enc_keys , max_lengh ) :
+
         sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         soft_Out = [] # nn.ModuleList([])
         # if type(sequence) != type(torch.tensor([1])) :
@@ -279,12 +294,46 @@ class decoder(nn.Module):
                         # sequence = torch.cat((sequence , self.EOS ),dim = 0 )
                 sequence = torch.cat((sequence , aux) , dim = 1)
         return torch.cat(soft_Out ,dim = 1)
-        
     
-    def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
-        # sequence = self.BOS
-        # print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
-        # print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
+
+    def forward_fit(self ,Enc_values , Enc_keys , max_lengh = None ) : #out shape = batch , seq-len , número de classes
+        
+        
+        if self.type_net     == "classification" :
+
+            if max_lengh == None or type(max_lengh) != type(1) :
+                raise ValueError("max_lengh deve ser preenchido com um inteiro igual ao tamanho da sequência target durante durante a fase de treinamento de uma rede Seq2Seq")
+            return self.__forward_fit_classification(Enc_values , Enc_keys , max_lengh )
+        
+        elif self.type_net   == "Bin_classification" :
+            
+            return self.__Bin_classification( Enc_values , Enc_keys)
+         
+        elif self.type_net   == "regression" :
+            pass
+        
+    def __Bin_classification(self , Enc_values , Enc_keys):    
+        sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
+        # soft_Out = []
+
+        buffer = self.pos_Encoder(sequence)
+        # buffer = torch.cat([ q.view(1,buffer.shape[0] , buffer.shape[1]) for _ in torch.arange(Enc_keys.shape[0]) ] ,
+        #               dim = 0 )
+        
+        for l in self.layers :
+            # print(f"\nbuffer : {buffer.shape}, \nEnc_values : {Enc_values.shape}, \nEnc_keys : {Enc_keys.shape}")
+            buffer = l(buffer , Enc_values , Enc_keys)
+
+        buffer = torch.cat( list( self.linear_Out(buffer[i][-1]).view(1 ,1,-1) for i in torch.arange(buffer.shape[0]) ) ,
+                               dim = 0)
+        
+        buffer = F.sigmoid( buffer )
+        # class_out = torch.round( buffer )
+
+        return buffer
+
+    def __forward_classification(self , Enc_values , Enc_keys , max_lengh   , force_max_lengh ) :
+        
         sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         idx = [ 0 ] 
         all_seq_EOS = False
@@ -341,12 +390,30 @@ class decoder(nn.Module):
         # print(f"idx = {idx}")
         idx[0] = torch.zeros(idx[-1].shape[0] , idx[-1].shape[1] , device = self.device )
         sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
-        # print(sequence)
-        return sequence[: , -1]
 
-        if sequence.shape[0] == max_lengh -1 :
-            return torch.cat((sequence,self.EOS),dim = 0)
-        return sequence
+        return sequence 
+    
+    
+    def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
+        
+        if self.type_net    == "classification" :
+            sequence  = self.__forward_classification(Enc_values , Enc_keys , max_lengh   , force_max_lengh)
+            return sequence[: , -1]
+        elif self.type_net  == "Bin_classification" :
+            
+            buffer = self.__Bin_classification( Enc_values , Enc_keys)
+            return torch.round( buffer )
+            
+        elif self.type_net  == "regression" :
+            pass
+        # sequence = self.BOS
+        # print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
+        # print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
+        
+
+        # if sequence.shape[0] == max_lengh -1 :
+        #     return torch.cat((sequence,self.EOS),dim = 0)
+        # return sequence
     
     def fit(self , input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
             lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_Input_Batch = None,
