@@ -244,6 +244,37 @@ class decoder(nn.Module):
             weights += i.weights()
         return weights
     
+   
+    def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
+        
+        if self.type_net    == "classification" :
+            sequence  = self.__forward_classification(Enc_values , Enc_keys , max_lengh   , force_max_lengh)
+            return sequence[: , -1]
+        elif self.type_net  == "Bin_classification" :
+            
+            buffer = self.__Bin_classification( Enc_values , Enc_keys)
+            return torch.round( buffer )
+            
+        elif self.type_net  == "regression" :
+            pass
+        
+    def forward_fit(self ,Enc_values , Enc_keys , max_lengh = None ) : #out shape = batch , seq-len , número de classes
+        
+        
+        if self.type_net     == "classification" :
+
+            if max_lengh == None or type(max_lengh) != type(1) :
+                raise ValueError("max_lengh deve ser preenchido com um inteiro igual ao tamanho da sequência target durante durante a fase de treinamento de uma rede Seq2Seq")
+            return self.__forward_fit_classification(Enc_values , Enc_keys , max_lengh )
+        
+        elif self.type_net   == "Bin_classification" :
+
+            return self.__Bin_classification( Enc_values , Enc_keys)
+         
+        elif self.type_net   == "regression" :
+            pass
+
+
 
     def __forward_fit_classification(self , Enc_values , Enc_keys , max_lengh ) :
 
@@ -294,24 +325,7 @@ class decoder(nn.Module):
                         # sequence = torch.cat((sequence , self.EOS ),dim = 0 )
                 sequence = torch.cat((sequence , aux) , dim = 1)
         return torch.cat(soft_Out ,dim = 1)
-    
 
-    def forward_fit(self ,Enc_values , Enc_keys , max_lengh = None ) : #out shape = batch , seq-len , número de classes
-        
-        
-        if self.type_net     == "classification" :
-
-            if max_lengh == None or type(max_lengh) != type(1) :
-                raise ValueError("max_lengh deve ser preenchido com um inteiro igual ao tamanho da sequência target durante durante a fase de treinamento de uma rede Seq2Seq")
-            return self.__forward_fit_classification(Enc_values , Enc_keys , max_lengh )
-        
-        elif self.type_net   == "Bin_classification" :
-            
-            return self.__Bin_classification( Enc_values , Enc_keys)
-         
-        elif self.type_net   == "regression" :
-            pass
-        
     def __Bin_classification(self , Enc_values , Enc_keys):    
         sequence = torch.cat( [self.BOS.view(1,1,-1) for _ in torch.arange(Enc_values.shape[0])]  , dim = 0 )
         # soft_Out = []
@@ -392,29 +406,8 @@ class decoder(nn.Module):
         sequence = torch.cat(idx , dim = 1 ) #[self.embedding.idx2token[i] for i in idx ]
 
         return sequence 
-    
-    
-    def forward(self ,Enc_values , Enc_keys , max_lengh = 100  , force_max_lengh = False) : #out shape = batch , seq-len
-        
-        if self.type_net    == "classification" :
-            sequence  = self.__forward_classification(Enc_values , Enc_keys , max_lengh   , force_max_lengh)
-            return sequence[: , -1]
-        elif self.type_net  == "Bin_classification" :
-            
-            buffer = self.__Bin_classification( Enc_values , Enc_keys)
-            return torch.round( buffer )
-            
-        elif self.type_net  == "regression" :
-            pass
-        # sequence = self.BOS
-        # print(f"self.BOS.view(1,1,-1)  :  {self.BOS}")
-        # print(f"Enc_values.shape[0]  :  {Enc_values.shape[0]}")
-        
 
-        # if sequence.shape[0] == max_lengh -1 :
-        #     return torch.cat((sequence,self.EOS),dim = 0)
-        # return sequence
-    
+     
     def fit(self , input_Batch :list , target_Batch : list, n , maxErro , maxAge = 1 ,mini_batch_size = 1  ,
             lossFunction = nn.CrossEntropyLoss() ,lossGraphPath = None , test_Input_Batch = None,
             test_Target_Batch = None , out_max_Len  = 150 , transform = None) :
